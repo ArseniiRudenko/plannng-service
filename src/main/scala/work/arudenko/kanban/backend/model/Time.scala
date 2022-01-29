@@ -1,4 +1,4 @@
-package org.openapitools.server.model
+package work.arudenko.kanban.backend.model
 
 import java.time.LocalDate
 import java.time.OffsetDateTime

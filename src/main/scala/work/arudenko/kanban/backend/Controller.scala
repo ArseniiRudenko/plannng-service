@@ -1,14 +1,11 @@
-package org.openapitools.server
+package work.arudenko.kanban.backend
 
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.Route
-import org.openapitools.server.api.CommentApi
-import org.openapitools.server.api.TaskApi
-import org.openapitools.server.api.TimeApi
-import org.openapitools.server.api.UserApi
 import akka.http.scaladsl.server.Directives._
 import akka.actor.ActorSystem
 import akka.stream.Materializer
+import work.arudenko.kanban.backend.api.{CommentApi, TaskApi, TimeApi, UserApi}
 
 class Controller(comment: CommentApi, task: TaskApi, time: TimeApi, user: UserApi)(implicit system: ActorSystem, materializer: Materializer) {
 

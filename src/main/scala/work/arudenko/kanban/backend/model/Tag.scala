@@ -1,5 +1,4 @@
-package org.openapitools.server.model
-
+package work.arudenko.kanban.backend.model
 
 /**
  * @param id  for example: ''null''

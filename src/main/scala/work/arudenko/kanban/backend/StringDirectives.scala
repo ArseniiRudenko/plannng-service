@@ -1,4 +1,4 @@
-package org.openapitools.server
+package work.arudenko.kanban.backend
 
 import akka.http.scaladsl.common._
 import akka.http.scaladsl.server.{Directive, Directive0, Directive1, InvalidRequiredValueForQueryParamRejection, MalformedFormFieldRejection, MissingFormFieldRejection, MissingQueryParamRejection, UnsupportedRequestContentTypeRejection}

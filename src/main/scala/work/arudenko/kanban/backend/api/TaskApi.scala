@@ -1,4 +1,4 @@
-package org.openapitools.server.api
+package work.arudenko.kanban.backend.api
 
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
@@ -6,17 +6,13 @@ import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
 import akka.http.scaladsl.unmarshalling.FromEntityUnmarshaller
 import akka.http.scaladsl.unmarshalling.FromStringUnmarshaller
-import org.openapitools.server.AkkaHttpHelper._
-import org.openapitools.server.StringDirectives
-import org.openapitools.server.MultipartDirectives
-import org.openapitools.server.FileField
-import org.openapitools.server.PartsAndFiles
+import work.arudenko.kanban.backend.AkkaHttpHelper._
 import java.io.File
-import org.openapitools.server.model.GeneralError
-import org.openapitools.server.model.Task
 import scala.util.Try
 import akka.http.scaladsl.server.MalformedRequestContentRejection
 import akka.http.scaladsl.server.directives.FileInfo
+import work.arudenko.kanban.backend.{FileField, MultipartDirectives, StringDirectives}
+import work.arudenko.kanban.backend.model.{GeneralError, Task}
 
 
 class TaskApi(
@@ -74,17 +70,16 @@ class TaskApi(
     path("task" / IntNumber / "uploadImage") { (taskId) => 
       post {  
         formAndFiles(FileField("file")) { partsAndFiles => 
-          val _____ : Try[Route] = for {
-            file <- optToTry(partsAndFiles.files.get("file"), s"File file missing")
-          } yield { 
-            implicit val vp: StringValueProvider = partsAndFiles.form
-              taskService.uploadFile(taskId = taskId, file = file)
+          val rt: Try[Route] = for {
+              file <- optToTry(partsAndFiles.files.get("file"), s"File file missing")
+            } yield {
+              implicit val vp: StringValueProvider = partsAndFiles.form
+                taskService.uploadFile(taskId = taskId, file = file)
             }
+            rt.fold[Route](t => reject(MalformedRequestContentRejection("Missing file.", t)), identity)
           }
-          _____.fold[Route](t => reject(MalformedRequestContentRejection("Missing file.", t)), identity)
         }
       }
-    }
 }
 
 
@@ -98,7 +93,7 @@ trait TaskApiService {
    * Code: 200, Message: successful task operation, DataType: Task
    * Code: 400, Message: Invalid message format, DataType: GeneralError
    */
-  def addTask(task: Option[Task])
+  def addTask(task: Task)
       (implicit toEntityMarshallerTask: ToEntityMarshaller[Task], toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route
 
   def deleteTask200: Route =
@@ -162,7 +157,7 @@ trait TaskApiService {
    * Code: 404, Message: Task not found
    * Code: 400, Message: Invalid message format, DataType: GeneralError
    */
-  def updateTask(task: Option[Task])
+  def updateTask(task: Task)
       (implicit toEntityMarshallerTask: ToEntityMarshaller[Task], toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route
 
   def updateTaskStatus400(responseGeneralError: GeneralError)(implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route =

@@ -1,4 +1,4 @@
-package org.openapitools.server.api
+package work.arudenko.kanban.backend.api
 
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
@@ -6,9 +6,9 @@ import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
 import akka.http.scaladsl.unmarshalling.FromEntityUnmarshaller
 import akka.http.scaladsl.unmarshalling.FromStringUnmarshaller
-import org.openapitools.server.AkkaHttpHelper._
-import org.openapitools.server.model.GeneralError
-import org.openapitools.server.model.Time
+import work.arudenko.kanban.backend.model.{GeneralError, Time}
+import work.arudenko.kanban.backend.AkkaHttpHelper._
+import work.arudenko.kanban.backend.model.GeneralError
 
 
 class TimeApi(

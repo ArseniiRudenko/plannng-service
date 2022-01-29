@@ -1,4 +1,4 @@
-package org.openapitools.server
+package work.arudenko.kanban.backend
 
 import java.io.File
 import java.nio.file.Files

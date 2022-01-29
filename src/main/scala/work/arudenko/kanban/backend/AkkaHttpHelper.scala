@@ -1,4 +1,4 @@
-package org.openapitools.server
+package work.arudenko.kanban.backend
 
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.{PathMatcher, PathMatcher1}
