@@ -10,11 +10,11 @@ object SqlContext {
   import com.typesafe.config.Config
   import com.typesafe.config.ConfigFactory
 
-  val conf: Config = ConfigFactory.load("jdbc")
+  val conf: Config = ConfigFactory.load()
   // initialize JDBC driver & connection pool
-  Class.forName("org.h2.Driver")
+  Class.forName(conf.getString("jdbc.class"))
 
-  ConnectionPool.singleton(conf.getString("url"), conf.getString("user"), conf.getString("password"))
+  ConnectionPool.singleton(conf.getString("jdbc.url"), conf.getString("jdbc.user"), conf.getString("jdbc.password"))
 
 
 

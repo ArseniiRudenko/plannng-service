@@ -1,9 +1,11 @@
 package work.arudenko.kanban.backend.model
 
 import scalikejdbc._
+import work.arudenko.kanban.backend.model.Task.{sqlExtractor, tbl}
 import work.arudenko.kanban.backend.orm.WithCommonSqlOperations
 
 import java.time.OffsetDateTime
+import scala.collection.immutable
 
 /**
  * @param id  for example: ''null''
@@ -21,7 +23,7 @@ final case class Comment (
 
 object Comment extends WithCommonSqlOperations[Comment] {
 
-  override val tableName = "issue_comments"
+  override val tableName = "project_track.issue_comments"
 
 
   override def sqlExtractor(rs: WrappedResultSet): Comment =
@@ -31,6 +33,7 @@ object Comment extends WithCommonSqlOperations[Comment] {
     rs.intOpt("author"),
     Some(rs.offsetDateTime("created_at")))
 
-  
+  def getByIssueId(issueId:Int): immutable.Seq[Comment] =
+    getList(sql"select * from $tbl where issue=$issueId")
 
 }

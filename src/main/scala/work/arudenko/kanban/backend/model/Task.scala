@@ -5,7 +5,6 @@ import scalikejdbc._
 import work.arudenko.kanban.backend.orm.WithCommonSqlOperations
 
 import java.time.OffsetDateTime
-import scala.collection.immutable
 
 /**
  * @param id  for example: ''null''
@@ -28,12 +27,12 @@ final case class Task (
   deadline: Option[OffsetDateTime],
   assigneeId: Option[Int],
   estimatedTime: Option[Int],
-  tags: Option[Seq[Tag]],
+  tags: Seq[Tag],
   status: Option[String])
 
 object Task extends WithCommonSqlOperations[Task] {
 
-  override val tableName = "issues"
+  override val tableName = "project_track.issues"
 
   override def sqlExtractor(rs: WrappedResultSet):Task =
     new Task(
@@ -45,15 +44,17 @@ object Task extends WithCommonSqlOperations[Task] {
       rs.offsetDateTimeOpt("deadline"),
       rs.intOpt("assignee"),
       rs.getOpt[PGInterval]("estimated_time").map(_.getHours),
-      None,
+      Tag.getTagsForIssue(rs.int("id")),
       Some(rs.string("cur_status"))
     )
 
-  def getByStatus(status:String)(implicit session:DBSession): Seq[Task] =
-    sql"select * from $tableName where cur_status=$status".map(rs=>sqlExtractor(rs)).list.apply()
+  def getByStatus(status:String): Seq[Task] =
+    getList(sql"select * from $tbl where cur_status=$status::project_track.status")
 
+  def getByTagId(id:Int): Seq[Task] =
+    getList(sql"select m.* from $tbl  join  project_track.tag_to_issue b on m.id=b.issue_id where b.tag_id=$id")
 
-  def getByHeader(header:String)(implicit session:DBSession): Seq[Task] =
-    sql"select * from $tableName where header ~ $header".map(rs=>sqlExtractor(rs)).list.apply()
-
+  def getByHeader(header:String): Seq[Task] =DB readOnly { implicit session =>
+    getList(sql"select * from $tbl where header ~ $header")
+  }
 }
