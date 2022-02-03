@@ -54,6 +54,9 @@ object Task extends WithCommonSqlOperations[Task] {
   def getByTagId(id:Int): Seq[Task] =
     getList(sql"select m.* from $tbl  join  project_track.tag_to_issue b on m.id=b.issue_id where b.tag_id=$id")
 
+  def getByTagIds(id:Seq[Int]): Seq[Task] =
+    getList(sql"select m.* from $tbl  join  project_track.tag_to_issue b on m.id=b.issue_id where b.tag_id in ${id}")
+
   def getByHeader(header:String): Seq[Task] =DB readOnly { implicit session =>
     getList(sql"select * from $tbl where header ~ $header")
   }

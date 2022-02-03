@@ -29,6 +29,7 @@ object Tag extends WithCommonSqlOperations[Tag]{
     getList(
       sql"select * from $tbl join project_track.tag_to_issue b on m.id=b.tag_id where b.issue_id=$issueId"
     )
+
   def getTagsByName(strMatch:String) =
     getList(sql"select * from $tbl where name ~ $strMatch")
 
