@@ -1,5 +1,6 @@
 package work.arudenko.kanban.backend.controller
 
+import akka.actor.ActorSystem
 import akka.http.javadsl.server.directives.SecurityDirectives.ProvidedCredentials
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
 import akka.http.scaladsl.model.headers.OAuth2BearerToken
@@ -7,13 +8,17 @@ import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.directives.Credentials
 import com.redis.api.StringApi.Always
 import com.typesafe.config.{Config, ConfigFactory}
+import com.typesafe.scalalogging.LazyLogging
+import scalikejdbc.TxBoundary.Future
 import work.arudenko.kanban.backend.api.UserApiService
 import work.arudenko.kanban.backend.model.{GeneralError, User}
 
 import java.util.concurrent.TimeUnit
+import scala.concurrent.ExecutionContextExecutor
 import scala.concurrent.duration.Duration
+import scala.util.{Failure, Success}
 
-class UserApiServiceImpl extends UserApiService{
+class UserApiServiceImpl(actorSystem: ActorSystem) extends UserApiService with LazyLogging{
 
   import org.bouncycastle.crypto.generators.Argon2BytesGenerator
   import org.bouncycastle.crypto.params.Argon2Parameters
@@ -24,6 +29,7 @@ class UserApiServiceImpl extends UserApiService{
   private def generateArgon2id(password: String, salt: String): Array[Byte] =
     generateArgon2id(password,base64Decoding(salt))
 
+  private implicit val dispatcher: ExecutionContextExecutor = actorSystem.dispatcher
   private val conf: Config = ConfigFactory.load()
   private val opsLimit: Int = conf.getInt("hash.opsLimit")
   private val memLimit: Int = conf.getInt("hash.memLimit")
@@ -111,8 +117,13 @@ class UserApiServiceImpl extends UserApiService{
 
   def generateSessionToken(user: User): String = {
     val sessionToken =base64Encoding(generateSalt)
-    redis.withClient{
-      client=> client.set(sessionToken,Pickle.intoBytes(user).array(),Always,Duration.create(4,TimeUnit.HOURS))
+    scala.concurrent.Future {
+      redis.withClient {
+        client => client.set(sessionToken, Pickle.intoBytes(user).array(), Always, Duration.create(4, TimeUnit.HOURS))
+      }
+    }.onComplete {
+      case Failure(exception) => logger.error("failed creating session token",exception)
+      case Success(value) => logger.trace(s"created session token, result returned is $value")
     }
     sessionToken
   }
