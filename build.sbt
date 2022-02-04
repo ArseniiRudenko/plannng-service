@@ -13,6 +13,8 @@ libraryDependencies ++= Seq(
   "org.postgresql"  %  "postgresql"     % "42.3.1",
   "com.typesafe" % "config" % "1.4.1",
   "org.bouncycastle" % "bcprov-jdk15on" % "1.70",
+  "net.debasishg" %% "redisclient" % "3.42",
+  "io.suzaku" %% "boopickle" % "1.4.0",
   "org.scalactic" %% "scalactic" % "3.2.10"% "test",
   "org.scalatest" %% "scalatest" % "3.2.10" % "test"
 )

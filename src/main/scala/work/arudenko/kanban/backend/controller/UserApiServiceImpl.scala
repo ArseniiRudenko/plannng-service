@@ -5,8 +5,13 @@ import akka.http.scaladsl.marshalling.ToEntityMarshaller
 import akka.http.scaladsl.model.headers.OAuth2BearerToken
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.directives.Credentials
+import com.redis.api.StringApi.Always
+import com.typesafe.config.{Config, ConfigFactory}
 import work.arudenko.kanban.backend.api.UserApiService
 import work.arudenko.kanban.backend.model.{GeneralError, User}
+
+import java.util.concurrent.TimeUnit
+import scala.concurrent.duration.Duration
 
 class UserApiServiceImpl extends UserApiService{
 
@@ -16,14 +21,17 @@ class UserApiServiceImpl extends UserApiService{
   import java.security.SecureRandom
   import java.util.Base64
 
-  def generateArgon2id(password: String, salt: String): Array[Byte] =
+  private def generateArgon2id(password: String, salt: String): Array[Byte] =
     generateArgon2id(password,base64Decoding(salt))
 
-    def generateArgon2id(password: String, salt: Array[Byte]): Array[Byte] = {
-      val opsLimit = 4
-      val memLimit = 1048576
-      val outputLength = 32
-      val parallelism = 8
+  private val conf: Config = ConfigFactory.load()
+  private val opsLimit: Int = conf.getInt("hash.opsLimit")
+  private val memLimit: Int = conf.getInt("hash.memLimit")
+  private val outputLength: Int = conf.getInt("hash.outputLength")
+  private val parallelism: Int = conf.getInt("hash.parallelism")
+
+  private def generateArgon2id(password: String, salt: Array[Byte]): Array[Byte] = {
+
       val builder = new Argon2Parameters
         .Builder(Argon2Parameters.ARGON2_id)
         .withVersion(Argon2Parameters.ARGON2_VERSION_13)
@@ -40,7 +48,7 @@ class UserApiServiceImpl extends UserApiService{
 
     private def generateSalt = {
       val secureRandom = new SecureRandom
-      val salt = new Array[Byte](32)
+      val salt = new Array[Byte](128)
       secureRandom.nextBytes(salt)
       salt
     }
@@ -96,8 +104,18 @@ class UserApiServiceImpl extends UserApiService{
     loginUser400(GeneralError(1,"wrong login or password"))
   }
 
+  import work.arudenko.kanban.backend.orm.RedisContext._
+  import com.redis.serialization._
+  import com.redis.serialization.Parse.Implicits._
+  import boopickle.Default._
 
-  def generateSessionToken(user: User): String = ???
+  def generateSessionToken(user: User): String = {
+    val sessionToken =base64Encoding(generateSalt)
+    redis.withClient{
+      client=> client.set(sessionToken,Pickle.intoBytes(user).array(),Always,Duration.create(4,TimeUnit.HOURS))
+    }
+    sessionToken
+  }
 
   /**
    * Code: 200, Message: successful operation, DataType: String

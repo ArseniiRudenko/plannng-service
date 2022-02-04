@@ -27,6 +27,8 @@
     <orderEntry type="library" name="sbt: com.typesafe:config:1.4.1:jar" level="project" />
     <orderEntry type="library" name="sbt: com.typesafe:ssl-config-core_2.12:0.6.0:jar" level="project" />
     <orderEntry type="library" name="sbt: commons-logging:commons-logging:1.2:jar" level="project" />
+    <orderEntry type="library" name="sbt: io.suzaku:boopickle_2.12:1.4.0:jar" level="project" />
+    <orderEntry type="library" name="sbt: net.debasishg:redisclient_2.12:3.42:jar" level="project" />
     <orderEntry type="library" name="sbt: org.apache.commons:commons-dbcp2:2.9.0:jar" level="project" />
     <orderEntry type="library" name="sbt: org.apache.commons:commons-pool2:2.10.0:jar" level="project" />
     <orderEntry type="library" name="sbt: org.bouncycastle:bcprov-jdk15on:1.70:jar" level="project" />

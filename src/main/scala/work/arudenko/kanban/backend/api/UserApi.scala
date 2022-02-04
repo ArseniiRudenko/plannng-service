@@ -181,8 +181,6 @@ trait UserApiMarshaller {
 
   implicit def fromEntityUnmarshallerUserList: FromEntityUnmarshaller[Seq[User]]
 
-
-
   implicit def toEntityMarshallerUser: ToEntityMarshaller[User]
 
   implicit def toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]
