@@ -12,6 +12,7 @@ libraryDependencies ++= Seq(
   "com.typesafe.scala-logging" %% "scala-logging" % "3.9.4",
   "org.postgresql"  %  "postgresql"     % "42.3.1",
   "com.typesafe" % "config" % "1.4.1",
+  "org.bouncycastle" % "bcprov-jdk15on" % "1.70",
   "org.scalactic" %% "scalactic" % "3.2.10"% "test",
   "org.scalatest" %% "scalatest" % "3.2.10" % "test"
 )
