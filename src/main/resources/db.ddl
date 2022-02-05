@@ -413,11 +413,12 @@ $$
 declare
     selected_status project_track.issues%rowtype;
 BEGIN
-    select * from project_track.issues
-    into selected_status
-        where new.issue=id and new.status=cur_status;
-
-    if  FOUND then
+    if new.status =
+       (SELECT DISTINCT ON (issue)
+            status
+        FROM project_track.issue_status_log
+        where new.issue=issue
+        ORDER BY issue, created_at DESC) then
         return null;
     else
         return new;
@@ -438,12 +439,10 @@ create function function_add_status_log_on_update() returns trigger
 as
 $$
 BEGIN
-    if(old.cur_status<>new.cur_status) then
-        INSERT INTO
-            project_track.issue_status_log(status,issue,created_by)
-        VALUES(new.cur_status,new.id,new.updated_by);
-    end if;
-    RETURN new;
+    INSERT INTO
+        project_track.issue_status_log(status,issue,created_by)
+    VALUES(new.cur_status,new.id,new.updated_by);
+    return new;
 END;
 $$;
 
@@ -454,5 +453,6 @@ create trigger add_status_log_on_update
         of cur_status
     on issues
     for each row
+    when (old.cur_status IS DISTINCT FROM new.cur_status)
 execute procedure function_add_status_log_on_update();
 
