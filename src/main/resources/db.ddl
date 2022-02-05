@@ -410,8 +410,6 @@ create function reject_if_same_status() returns trigger
     language plpgsql
 as
 $$
-declare
-    selected_status project_track.issues%rowtype;
 BEGIN
     if new.status =
        (SELECT DISTINCT ON (issue)
