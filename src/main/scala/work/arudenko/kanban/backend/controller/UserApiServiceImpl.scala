@@ -12,7 +12,7 @@ import com.typesafe.config.{Config, ConfigFactory}
 import com.typesafe.scalalogging.LazyLogging
 import scalikejdbc.TxBoundary.Future
 import work.arudenko.kanban.backend.api.UserApiService
-import work.arudenko.kanban.backend.model.{GeneralError, User, UserCreationInfo}
+import work.arudenko.kanban.backend.model.{GeneralError, User, UserCreationInfo, UserInfo, UserUpdateInfo}
 
 import java.util.concurrent.TimeUnit
 import scala.concurrent.ExecutionContextExecutor
@@ -35,20 +35,28 @@ class UserApiServiceImpl(actorSystem: ActorSystem) extends UserApiService with L
    * Code: 404, Message: User not found
    */
   override def deleteUser(username: String)(implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route =
-    User.getId(username) match {
-      case Some(value) => User.delete(value); User200
-      case None => User404
+    authenticateOAuth2("Global", authenticator) {
+      auth =>
+        if(auth.user.admin || auth.user.email.contains(username))
+          User.getId(username) match {
+            case Some(value) => User.delete(value); User200
+            case None => User404
+          }
+        else
+          User403
     }
-
   /**
    * Code: 200, Message: successful operation, DataType: User
    * Code: 400, Message: Invalid message format, DataType: GeneralError
    * Code: 404, Message: User not found
    */
-  override def getUserByName(username: String)(implicit toEntityMarshallerUser: ToEntityMarshaller[User], toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route =
-    User.getUser(username) match {
-      case Some(value) => getUserByName200(value)
-      case None => User404
+  override def getUserByName(username: String)(implicit toEntityMarshallerUser: ToEntityMarshaller[UserInfo], toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route =
+    authenticateOAuth2("Global", authenticator) {
+      _ =>
+        User.getUser(username) match {
+          case Some(value) => getUserByName200(UserInfo(value))
+          case None => User404
+        }
     }
 
   private def fakeCalculatingAndFuckOff(pw: String)(implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route = {
@@ -63,7 +71,7 @@ class UserApiServiceImpl(actorSystem: ActorSystem) extends UserApiService with L
   import com.redis.serialization.Parse.Implicits._
   import boopickle.Default._
 
-  def generateSessionToken(user: User): String = {
+  private def generateSessionToken(user: User): String = {
     val sessionToken = generateSalt.toBase64
     scala.concurrent.Future {
       redis.withClient {
@@ -118,4 +126,22 @@ class UserApiServiceImpl(actorSystem: ActorSystem) extends UserApiService with L
         }
     }
 
+  /**
+   * Code: 200, Message: Success
+   * Code: 400, Message: Invalid message format, DataType: GeneralError
+   */
+  override def createUsersWithArrayInput(user: Seq[UserCreationInfo])(implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route =
+    authenticateOAuth2("Global", authenticator) {
+      auth =>
+        if(auth.user.admin)
+          ???
+        else
+          User403
+    }
+  /**
+   * Code: 200, Message: successful operation, DataType: User
+   * Code: 400, Message: Invalid message format, DataType: GeneralError
+   * Code: 404, Message: User not found
+   */
+  override def updateUser(user: UserUpdateInfo)(implicit toEntityMarshallerUser: ToEntityMarshaller[User], toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route = ???
 }

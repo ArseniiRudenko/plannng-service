@@ -76,6 +76,9 @@ trait UserApiService {
     complete((200, "Success"))
   def User404: Route =
     complete((404, "User not found"))
+  def User403: Route =
+    complete((403, "Current user is not authorized to do that"))
+
   def User400(responseGeneralError: GeneralError)(implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route =
     complete((400, responseGeneralError))
 
@@ -103,7 +106,7 @@ trait UserApiService {
    * Code: 404, Message: User not found
    */
   def getUserByName(username: String)
-      (implicit toEntityMarshallerUser: ToEntityMarshaller[User], toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route
+      (implicit toEntityMarshallerUser: ToEntityMarshaller[UserInfo], toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route
 
   def loginUser200(responseString: String)(implicit toEntityMarshallerString: ToEntityMarshaller[String]): Route =
     complete((200, responseString))

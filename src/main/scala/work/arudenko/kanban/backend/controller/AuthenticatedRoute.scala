@@ -2,6 +2,7 @@ package work.arudenko.kanban.backend.controller
 
 import akka.http.scaladsl.server.Directives.{Authenticator, AuthenticatorPF}
 import akka.http.scaladsl.server.directives.Credentials
+import boopickle.{DecoderSpeed, Default, EncoderSpeed}
 import boopickle.Default.Pickle
 import com.redis.api.StringApi.Always
 import com.typesafe.config.{Config, ConfigFactory}
@@ -61,8 +62,10 @@ trait AuthenticatedRoute {
   import com.redis.serialization.Parse.Implicits._
   import boopickle.Default._
 
-  implicit val userParser: Parse[User] = Parse(arr=>Unpickle[User].fromBytes(ByteBuffer.wrap(arr)))
-  implicit val userSerializer:Format = Format({case u:User => Pickle.intoBytes(u).array()})
+  protected def pickleState: PickleState = new PickleState(new EncoderSpeed)
+  protected val unpickleState: ByteBuffer => Default.UnpickleState = (b: ByteBuffer) => new UnpickleState(new DecoderSpeed(b))
+  protected implicit val userParser: Parse[User] = Parse(arr=>Unpickle[User].fromBytes(ByteBuffer.wrap(arr))(unpickleState))
+  protected implicit val userSerializer:Format = Format({case u:User => Pickle.intoBytes(u)(pickleState,implicitly[Pickler[User]]).array()})
 
 
   val authenticator:Authenticator[ValidAuth] = {

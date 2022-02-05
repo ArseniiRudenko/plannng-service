@@ -48,7 +48,17 @@ final case class UserInfo(
   admin:Boolean
 )
 
-
+object UserInfo{
+  def apply(user:User):UserInfo =
+    new UserInfo(
+      user.firstName,
+      user.lastName,
+      user.email,
+      user.phone,
+      user.enabled,
+      user.admin
+    )
+}
 
 object User extends WithCommonSqlOperations[User]{
   override def sqlExtractor(rs: WrappedResultSet): User =
