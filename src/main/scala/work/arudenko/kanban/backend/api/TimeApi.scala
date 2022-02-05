@@ -25,22 +25,18 @@ class TimeApi(
             entity(as[Time]){ time =>
               timeService.addTime(taskId = taskId, time = time)
             }
+      } ~
+      get {
+        timeService.getTime(taskId = taskId)
       }
     } ~
     path("time" / IntNumber) { (recordId) => 
       delete {  
             timeService.deleteTimeRecord(recordId = recordId)
-      }
-    } ~
-    path("task" / IntNumber / "time") { (taskId) => 
-      get {  
-            timeService.getTime(taskId = taskId)
-      }
-    } ~
-    path("time" / IntNumber) { (recordId) => 
-      get {  
-            timeService.getTimeRecordById(recordId = recordId)
-      }
+      }~
+      get {
+          timeService.getTimeRecordById(recordId = recordId)
+        }
     }
 }
 

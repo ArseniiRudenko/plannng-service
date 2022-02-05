@@ -28,12 +28,12 @@ class TaskApiServiceImpl extends TaskApiService with LazyLogging with Authentica
         if (auth.user.admin)
           Task.delete(taskId) match {
             case 0 => Task404
-            case _ => deleteTask200
+            case _ => Task200
           }
         else
           Task.delete(taskId) match {
             case 0 => Task404
-            case _ => deleteTask200
+            case _ => Task200
           }
     }
 
@@ -42,23 +42,31 @@ class TaskApiServiceImpl extends TaskApiService with LazyLogging with Authentica
    * Code: 400, Message: Invalid message format, DataType: GeneralError
    */
   override def findTaskByStatus(status: String)(implicit toEntityMarshallerTaskarray: ToEntityMarshaller[Seq[Task]], toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route =
-    findTaskByStatus200(Task.getByStatus(status))
-
+    authenticateOAuth2("Global",authenticator) {
+      auth =>
+        findTaskByStatus200(Task.getByStatus(status))
+    }
   /**
    * Code: 200, Message: successful operation, DataType: Seq[Task]
    * Code: 400, Message: Invalid message format, DataType: GeneralError
    */
   override def findTasksByTags(tags: String)(implicit toEntityMarshallerTaskarray: ToEntityMarshaller[Seq[Task]], toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route =
-    findTasksByTags200(Task.getByTagIds(Tag.getTagsByName(tags).map(tag=>tag.id.get)))
+    authenticateOAuth2("Global",authenticator) {
+      auth =>
+        findTasksByTags200(Task.getByTagIds(Tag.getTagsByName(tags).map(tag => tag.id.get)))
+    }
   /**
    * Code: 200, Message: successful operation, DataType: Task
    * Code: 400, Message: Invalid message format, DataType: GeneralError
    * Code: 404, Message: Task not found
    */
   override def getTaskById(taskId: Int)(implicit toEntityMarshallerTask: ToEntityMarshaller[Task], toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route =
-    Task.get(taskId) match {
-      case Some(value) => getTaskById200(value)
-      case None => Task404
+    authenticateOAuth2("Global",authenticator) {
+      auth =>
+        Task.get(taskId) match {
+          case Some(value) => getTaskById200(value)
+          case None => Task404
+        }
     }
 
 
@@ -74,7 +82,14 @@ class TaskApiServiceImpl extends TaskApiService with LazyLogging with Authentica
    * Code: 404, Message: task not found
    * Code: 200, Message: successful operation
    */
-  override def updateTaskStatus(taskId: Int, status: String)(implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route = ???
+  override def updateTaskStatus(taskId: Int, status: String)(implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route =
+    authenticateOAuth2("Global",authenticator) {
+      auth =>
+            Task.updateStatus(taskId,auth.user.id,status) match {
+              case 0 => Task404
+              case _ => Task200
+            }
+    }
 
   /**
    * Code: 200, Message: successful operation

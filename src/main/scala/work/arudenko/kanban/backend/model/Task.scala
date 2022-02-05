@@ -2,7 +2,6 @@ package work.arudenko.kanban.backend.model
 
 import org.postgresql.util.PGInterval
 import scalikejdbc._
-import work.arudenko.kanban.backend.model.Comment.{tbl, update}
 import work.arudenko.kanban.backend.orm.WithCommonSqlOperations
 
 import java.time.OffsetDateTime
@@ -62,6 +61,7 @@ object Task extends WithCommonSqlOperations[Task] {
     getList(sql"select * from $tbl where header ~ $header")
   }
 
-
+  def updateStatus(taskId:Int,userId:Int,status:String): Int =
+    update(sql"insert into project_track.issue_status_log(status,issue,created_by)  values ($status::project_track.status,$taskId,$userId)")
 
 }

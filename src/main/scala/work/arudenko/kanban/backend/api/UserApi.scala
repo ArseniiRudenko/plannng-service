@@ -44,10 +44,8 @@ class UserApi(
       delete {  
             userService.deleteUser(username = username)
       }
-    } ~
-    path("user" / Segment) { (username) => 
-      get {  
-            userService.getUserByName(username = username)
+      get {
+        userService.getUserByName(username = username)
       }
     } ~
     path("user" / "login") { 
@@ -83,7 +81,6 @@ trait UserApiService {
 
   def getUserByName200(user:UserInfo)(implicit toEntityMarshallerUserInfo: ToEntityMarshaller[UserInfo]):Route =
     complete((200, user))
-
 
   /**
    * Code: 200, Message: Success
@@ -141,7 +138,6 @@ trait UserApiMarshaller {
   implicit def fromEntityUnmarshallerUserList: FromEntityUnmarshaller[Seq[UserCreationInfo]]
   implicit def toEntityMarshallerUserInfo: ToEntityMarshaller[UserInfo]
   implicit def toEntityMarshallerUser: ToEntityMarshaller[User]
-
   implicit def toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]
 
 }
