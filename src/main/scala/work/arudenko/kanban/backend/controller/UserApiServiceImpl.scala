@@ -18,50 +18,9 @@ import scala.concurrent.ExecutionContextExecutor
 import scala.concurrent.duration.Duration
 import scala.util.{Failure, Success}
 
-class UserApiServiceImpl(actorSystem: ActorSystem) extends UserApiService with LazyLogging{
-
-  import org.bouncycastle.crypto.generators.Argon2BytesGenerator
-  import org.bouncycastle.crypto.params.Argon2Parameters
-  import java.nio.charset.StandardCharsets
-  import java.security.SecureRandom
-  import java.util.Base64
-
-  private def generateArgon2id(password: String, salt: String): Array[Byte] =
-    generateArgon2id(password,base64Decoding(salt))
+class UserApiServiceImpl(actorSystem: ActorSystem) extends UserApiService with LazyLogging with AuthenticatedRoute {
 
   private implicit val dispatcher: ExecutionContextExecutor = actorSystem.dispatcher
-  private val conf: Config = ConfigFactory.load()
-  private val opsLimit: Int = conf.getInt("hash.opsLimit")
-  private val memLimit: Int = conf.getInt("hash.memLimit")
-  private val outputLength: Int = conf.getInt("hash.outputLength")
-  private val parallelism: Int = conf.getInt("hash.parallelism")
-
-  private def generateArgon2id(password: String, salt: Array[Byte]): Array[Byte] = {
-
-      val builder = new Argon2Parameters
-        .Builder(Argon2Parameters.ARGON2_id)
-        .withVersion(Argon2Parameters.ARGON2_VERSION_13)
-        .withIterations(opsLimit)
-        .withMemoryAsKB(memLimit)
-        .withParallelism(parallelism)
-        .withSalt(salt)
-      val gen = new Argon2BytesGenerator
-      gen.init(builder.build)
-      val result = new Array[Byte](outputLength)
-      gen.generateBytes(password.getBytes(StandardCharsets.UTF_8), result, 0, result.length)
-      result
-    }
-
-    private def generateSalt = {
-      val secureRandom = new SecureRandom
-      val salt = new Array[Byte](128)
-      secureRandom.nextBytes(salt)
-      salt
-    }
-
-   private def base64Encoding(input: Array[Byte]) = Base64.getEncoder.encodeToString(input)
-   private def base64Decoding(input: String) = Base64.getDecoder.decode(input)
-
 
   /**
    * Code: 200, Message: Success
