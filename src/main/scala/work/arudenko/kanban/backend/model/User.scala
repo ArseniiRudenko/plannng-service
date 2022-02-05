@@ -48,6 +48,6 @@ object User extends WithCommonSqlOperations[User]{
   def getId(email:String): Option[Int] =
     DB readOnly { implicit session =>
       sql" select id from $tbl where email=$email ".map(rs=>rs.int("id")).single.apply()
-    },
+    }
 
 }
