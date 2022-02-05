@@ -48,15 +48,13 @@ trait AuthenticatedRoute {
     result
   }
 
-  protected def generateSalt = {
+  protected def generateSalt: Array[Byte] = {
     val secureRandom = new SecureRandom
     val salt = new Array[Byte](128)
     secureRandom.nextBytes(salt)
     salt
   }
 
-  protected def base64Encoding(input: Array[Byte]) = Base64.getEncoder.encodeToString(input)
-  protected def base64Decoding(input: String) = Base64.getDecoder.decode(input)
 
   import work.arudenko.kanban.backend.orm.RedisContext._
   import com.redis.serialization._

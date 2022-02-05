@@ -4,6 +4,7 @@ import akka.actor.ActorSystem
 import akka.http.javadsl.server.directives.SecurityDirectives.ProvidedCredentials
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
 import akka.http.scaladsl.model.headers.OAuth2BearerToken
+import akka.http.scaladsl.server.Directives.authenticateOAuth2
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.directives.Credentials
 import com.redis.api.StringApi.Always
@@ -65,7 +66,7 @@ class UserApiServiceImpl(actorSystem: ActorSystem) extends UserApiService with L
   private def fakeCalculatingAndFuckOff(pw:String)(implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]):Route = {
     Credentials(Some(OAuth2BearerToken(pw)))
       .asInstanceOf[Credentials.Provided]
-      .verify(null,pw=>base64Encoding(generateArgon2id(pw, "")))
+      .verify(null,pw=>generateArgon2id(pw, "").toBase64)
     loginUser400(GeneralError(1,"wrong login or password"))
   }
 
@@ -75,7 +76,7 @@ class UserApiServiceImpl(actorSystem: ActorSystem) extends UserApiService with L
   import boopickle.Default._
 
   def generateSessionToken(user: User): String = {
-    val sessionToken =base64Encoding(generateSalt)
+    val sessionToken = generateSalt.toBase64
     scala.concurrent.Future {
       redis.withClient {
         client => client.set(sessionToken, Pickle.intoBytes(user).array(), Always, Duration.create(4, TimeUnit.HOURS))
@@ -98,7 +99,7 @@ class UserApiServiceImpl(actorSystem: ActorSystem) extends UserApiService with L
         user.password match {
           case Some(storedPassword) => {
             val (secret,salt) = storedPassword.splitAt(storedPassword.lastIndexOf(":"))
-            val result = creds.verify(secret,curPw=>base64Encoding(generateArgon2id(curPw, salt)))
+            val result = creds.verify(secret,curPw=>generateArgon2id(curPw, salt).toBase64)
             if (result){
               loginUser200(generateSessionToken(user))
             }else {
@@ -113,7 +114,20 @@ class UserApiServiceImpl(actorSystem: ActorSystem) extends UserApiService with L
    * Code: 200, Message: Success
    * Code: 400, Message: Invalid message format, DataType: GeneralError
    */
-  override def logoutUser()(implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route = ???
+  override def logoutUser()(implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route =
+    authenticateOAuth2("Global",authenticator){
+    auth=>
+      redis.withClient {
+        client =>
+          client.del(auth.token) match {
+            case Some(value) if value == 1 => logoutUser200
+            case Some(value) =>
+              logger.warn(s"logout for user ${auth.user} and token ${auth.token} returned value $value, which is not expected")
+              logoutUser400(GeneralError(0,"wtf?"))
+            case None => loginUser400(GeneralError(1,"not logged in"))
+          }
+      }
+  }
 
   /**
    * Code: 200, Message: successful operation, DataType: User
