@@ -2,6 +2,7 @@ package work.arudenko.kanban.backend.controller
 
 import akka.http.scaladsl.server.Directives.{Authenticator, AuthenticatorPF}
 import akka.http.scaladsl.server.directives.Credentials
+import boopickle.Default.Pickle
 import com.redis.api.StringApi.Always
 import com.typesafe.config.{Config, ConfigFactory}
 import work.arudenko.kanban.backend.model.User
@@ -20,10 +21,9 @@ trait AuthenticatedRoute {
   import org.bouncycastle.crypto.params.Argon2Parameters
   import java.nio.charset.StandardCharsets
   import java.security.SecureRandom
-  import java.util.Base64
 
   protected def generateArgon2id(password: String, salt: String): Array[Byte] =
-    generateArgon2id(password,base64Decoding(salt))
+    generateArgon2id(password,salt.asBase64)
 
 
   private val conf: Config = ConfigFactory.load()
@@ -62,6 +62,8 @@ trait AuthenticatedRoute {
   import boopickle.Default._
 
   implicit val userParser: Parse[User] = Parse(arr=>Unpickle[User].fromBytes(ByteBuffer.wrap(arr)))
+  implicit val userSerializer:Format = Format({case u:User => Pickle.intoBytes(u).array()})
+
 
   val authenticator:Authenticator[ValidAuth] = {
     case Credentials.Missing => None

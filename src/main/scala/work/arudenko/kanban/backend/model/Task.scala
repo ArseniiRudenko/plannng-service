@@ -2,6 +2,7 @@ package work.arudenko.kanban.backend.model
 
 import org.postgresql.util.PGInterval
 import scalikejdbc._
+import work.arudenko.kanban.backend.model.Comment.{tbl, update}
 import work.arudenko.kanban.backend.orm.WithCommonSqlOperations
 
 import java.time.OffsetDateTime
@@ -60,4 +61,7 @@ object Task extends WithCommonSqlOperations[Task] {
   def getByHeader(header:String): Seq[Task] =DB readOnly { implicit session =>
     getList(sql"select * from $tbl where header ~ $header")
   }
+
+
+
 }

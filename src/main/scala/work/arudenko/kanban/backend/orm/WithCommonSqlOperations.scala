@@ -31,7 +31,6 @@ trait WithCommonSqlOperations[T] extends SQLSyntaxSupport[T] {
 
   def sqlExtractor(rs: WrappedResultSet):T
 
-
   protected val curSyntax: scalikejdbc.QuerySQLSyntaxProvider[scalikejdbc.SQLSyntaxSupport[T], T] = syntax("m")
 
   protected def tbl: scalikejdbc.TableAsAliasSQLSyntax =this.as(curSyntax)

@@ -6,11 +6,10 @@ import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
 import akka.http.scaladsl.unmarshalling.FromEntityUnmarshaller
 import akka.http.scaladsl.unmarshalling.FromStringUnmarshaller
-import work.arudenko.kanban.backend.model.{GeneralError, User}
+import work.arudenko.kanban.backend.model.{GeneralError, User, UserCreationInfo, UserInfo, UserUpdateInfo}
 import work.arudenko.kanban.backend.AkkaHttpHelper._
 
 import java.time.OffsetDateTime
-import work.arudenko.kanban.backend.model.User
 
 
 class UserApi(
@@ -23,23 +22,21 @@ class UserApi(
 
   lazy val route: Route =
     path("user") { 
-      post {  
-            entity(as[User]){ user =>
-              userService.createUser(user = user)
-            }
+      post {
+        entity(as[UserCreationInfo]){ user =>
+          userService.createUser(user = user)
+        }
+      }~
+      put {
+        entity(as[UserUpdateInfo]){ user =>
+          userService.updateUser(user = user)
+        }
       }
     } ~
     path("user" / "createWithArray") { 
       post {  
-            entity(as[Seq[User]]){ user =>
+            entity(as[Seq[UserCreationInfo]]){ user =>
               userService.createUsersWithArrayInput(user = user)
-            }
-      }
-    } ~
-    path("user" / "createWithList") { 
-      post {  
-            entity(as[Seq[User]]){ user =>
-              userService.createUsersWithListInput(user = user)
             }
       }
     } ~
@@ -64,58 +61,37 @@ class UserApi(
       get {  
             userService.logoutUser()
       }
-    } ~
-    path("user" / Segment) { (username) => 
-      put {  
-            entity(as[User]){ user =>
-              userService.updateUser(username = username, user = user)
-            }
-      }
     }
 }
 
 
 trait UserApiService {
 
-  def createUser200: Route =
-    complete((200, "Success"))
-  def createUser400(responseGeneralError: GeneralError)(implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route =
-    complete((400, responseGeneralError))
   /**
    * Code: 200, Message: Success
    * Code: 400, Message: Invalid message format, DataType: GeneralError
    */
-  def createUser(user: User)
+  def createUser(user: UserCreationInfo)
       (implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route
 
-  def createUsersWithArrayInput200: Route =
+  def User200: Route =
     complete((200, "Success"))
-  def createUsersWithArrayInput400(responseGeneralError: GeneralError)(implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route =
-    complete((400, responseGeneralError))
-  /**
-   * Code: 200, Message: Success
-   * Code: 400, Message: Invalid message format, DataType: GeneralError
-   */
-  def createUsersWithArrayInput(user: Seq[User])
-      (implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route
-
-  def createUsersWithListInput400(responseGeneralError: GeneralError)(implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route =
-    complete((400, responseGeneralError))
-  def createUsersWithListInput200: Route =
-    complete((200, "Success"))
-  /**
-   * Code: 400, Message: Invalid message format, DataType: GeneralError
-   * Code: 200, Message: Success
-   */
-  def createUsersWithListInput(user: Seq[User])
-      (implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route
-
-  def deleteUser200: Route =
-    complete((200, "Success"))
-  def deleteUser400(responseGeneralError: GeneralError)(implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route =
-    complete((400, responseGeneralError))
-  def deleteUser404: Route =
+  def User404: Route =
     complete((404, "User not found"))
+  def User400(responseGeneralError: GeneralError)(implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route =
+    complete((400, responseGeneralError))
+
+  def getUserByName200(user:UserInfo)(implicit toEntityMarshallerUserInfo: ToEntityMarshaller[UserInfo]):Route =
+    complete((200, user))
+
+
+  /**
+   * Code: 200, Message: Success
+   * Code: 400, Message: Invalid message format, DataType: GeneralError
+   */
+  def createUsersWithArrayInput(user: Seq[UserCreationInfo])
+      (implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route
+
   /**
    * Code: 200, Message: Success
    * Code: 400, Message: Invalid message format, DataType: GeneralError
@@ -124,13 +100,7 @@ trait UserApiService {
   def deleteUser(username: String)
       (implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route
 
-  def getUserByName200(responseUser: User)(implicit toEntityMarshallerUser: ToEntityMarshaller[User]): Route =
-    complete((200, responseUser))
-  def getUserByName400(responseGeneralError: GeneralError)(implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route =
-    complete((400, responseGeneralError))
-  def getUserByName404: Route =
-    complete((404, "User not found"))
-  /**
+    /**
    * Code: 200, Message: successful operation, DataType: User
    * Code: 400, Message: Invalid message format, DataType: GeneralError
    * Code: 404, Message: User not found
@@ -140,8 +110,7 @@ trait UserApiService {
 
   def loginUser200(responseString: String)(implicit toEntityMarshallerString: ToEntityMarshaller[String]): Route =
     complete((200, responseString))
-  def loginUser400(responseGeneralError: GeneralError)(implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route =
-    complete((400, responseGeneralError))
+
   /**
    * Code: 200, Message: successful operation, DataType: String
    * Code: 400, Message: Invalid message format, DataType: GeneralError
@@ -149,10 +118,6 @@ trait UserApiService {
   def loginUser(username: String, password: String)
       (implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route
 
-  def logoutUser200: Route =
-    complete((200, "Success"))
-  def logoutUser400(responseGeneralError: GeneralError)(implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route =
-    complete((400, responseGeneralError))
   /**
    * Code: 200, Message: Success
    * Code: 400, Message: Invalid message format, DataType: GeneralError
@@ -160,27 +125,21 @@ trait UserApiService {
   def logoutUser()
       (implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route
 
-  def updateUser200(responseUser: User)(implicit toEntityMarshallerUser: ToEntityMarshaller[User]): Route =
-    complete((200, responseUser))
-  def updateUser400(responseGeneralError: GeneralError)(implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route =
-    complete((400, responseGeneralError))
-  def updateUser404: Route =
-    complete((404, "User not found"))
   /**
    * Code: 200, Message: successful operation, DataType: User
    * Code: 400, Message: Invalid message format, DataType: GeneralError
    * Code: 404, Message: User not found
    */
-  def updateUser(username: String, user: User)
+  def updateUser(user: UserUpdateInfo)
       (implicit toEntityMarshallerUser: ToEntityMarshaller[User], toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route
 
 }
 
 trait UserApiMarshaller {
-  implicit def fromEntityUnmarshallerUser: FromEntityUnmarshaller[User]
-
-  implicit def fromEntityUnmarshallerUserList: FromEntityUnmarshaller[Seq[User]]
-
+  implicit def fromEntityUnmarshallerUserCreate: FromEntityUnmarshaller[UserCreationInfo]
+  implicit def fromEntityUnmarshallerUserUpdate: FromEntityUnmarshaller[UserUpdateInfo]
+  implicit def fromEntityUnmarshallerUserList: FromEntityUnmarshaller[Seq[UserCreationInfo]]
+  implicit def toEntityMarshallerUserInfo: ToEntityMarshaller[UserInfo]
   implicit def toEntityMarshallerUser: ToEntityMarshaller[User]
 
   implicit def toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]

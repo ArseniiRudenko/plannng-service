@@ -2,10 +2,12 @@ package work.arudenko.kanban.backend.model
 
 import org.postgresql.util.PGInterval
 import scalikejdbc._
+import work.arudenko.kanban.backend.model.Task.{tbl, update}
 import work.arudenko.kanban.backend.orm.WithCommonSqlOperations
 
 import java.time.LocalDate
 import java.time.OffsetDateTime
+import scala.collection.immutable
 
 /**
  * @param id  for example: ''null''
@@ -34,9 +36,12 @@ object Time extends WithCommonSqlOperations[Time]{
 
   override val tableName = "project_track.spent_time"
 
-  def getByUser(userId:Int) = getList(sql"select * from $tbl where person=$userId")
+  def getByUser(userId:Int): immutable.Seq[Time] = getList(sql"select * from $tbl where person=$userId")
 
-  def getByTask(taskId:Int) = getList(sql"select * from $tbl where issue=$taskId")
+  def getByTask(taskId:Int): immutable.Seq[Time] = getList(sql"select * from $tbl where issue=$taskId")
+
+  def deleteForUser(userId:Int,recordId:Int): Int =
+    update(sql"delete from $tbl where id=$recordId and person=$userId")
 
 }
 

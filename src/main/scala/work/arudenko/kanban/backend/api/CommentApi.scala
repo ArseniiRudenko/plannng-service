@@ -53,7 +53,7 @@ trait CommentApiService {
     complete((200, responseComment))
   def addComment400(responseGeneralError: GeneralError)(implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route =
     complete((400, responseGeneralError))
-  def addComment404: Route =
+  def Comment404: Route =
     complete((404, "Task not found"))
   /**
    * Code: 200, Message: successful operation, DataType: Comment
@@ -67,8 +67,9 @@ trait CommentApiService {
     complete((200, "successful operation"))
   def deleteComment400(responseGeneralError: GeneralError)(implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route =
     complete((400, responseGeneralError))
-  def deleteComment404: Route =
-    complete((404, "Task not found"))
+
+  def deleteComment403: Route =
+    complete((403, "Only admins can remove tasks"))
   /**
    * Code: 200, Message: successful operation
    * Code: 400, Message: Invalid message format, DataType: GeneralError
@@ -81,8 +82,7 @@ trait CommentApiService {
     complete((200, responseCommentarray))
   def getComments400(responseGeneralError: GeneralError)(implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route =
     complete((400, responseGeneralError))
-  def getComments404: Route =
-    complete((404, "Task not found"))
+
   /**
    * Code: 200, Message: successful operation, DataType: Seq[Comment]
    * Code: 400, Message: Invalid message format, DataType: GeneralError
@@ -95,8 +95,6 @@ trait CommentApiService {
     complete((200, responseComment))
   def updateComment400(responseGeneralError: GeneralError)(implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route =
     complete((400, responseGeneralError))
-  def updateComment404: Route =
-    complete((404, "Task not found"))
   /**
    * Code: 200, Message: successful operation, DataType: Comment
    * Code: 400, Message: Invalid message format, DataType: GeneralError

@@ -100,7 +100,7 @@ trait TaskApiService {
     complete((200, "successful operation"))
   def deleteTask400(responseGeneralError: GeneralError)(implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route =
     complete((400, responseGeneralError))
-  def deleteTask404: Route =
+  def Task404: Route =
     complete((404, "Task not found"))
   /**
    * Code: 200, Message: successful operation
@@ -136,8 +136,7 @@ trait TaskApiService {
     complete((200, responseTask))
   def getTaskById400(responseGeneralError: GeneralError)(implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route =
     complete((400, responseGeneralError))
-  def getTaskById404: Route =
-    complete((404, "Task not found"))
+
   /**
    * Code: 200, Message: successful operation, DataType: Task
    * Code: 400, Message: Invalid message format, DataType: GeneralError
@@ -148,8 +147,6 @@ trait TaskApiService {
 
   def updateTask200(responseTask: Task)(implicit toEntityMarshallerTask: ToEntityMarshaller[Task]): Route =
     complete((200, responseTask))
-  def updateTask404: Route =
-    complete((404, "Task not found"))
   def updateTask400(responseGeneralError: GeneralError)(implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route =
     complete((400, responseGeneralError))
   /**
@@ -162,8 +159,7 @@ trait TaskApiService {
 
   def updateTaskStatus400(responseGeneralError: GeneralError)(implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route =
     complete((400, responseGeneralError))
-  def updateTaskStatus404: Route =
-    complete((404, "task not found"))
+
   def updateTaskStatus200: Route =
     complete((200, "successful operation"))
   /**
@@ -178,8 +174,6 @@ trait TaskApiService {
     complete((200, "successful operation"))
   def uploadFile400(responseGeneralError: GeneralError)(implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route =
     complete((400, responseGeneralError))
-  def uploadFile404: Route =
-    complete((404, "task not found"))
   /**
    * Code: 200, Message: successful operation
    * Code: 400, Message: Invalid message format, DataType: GeneralError

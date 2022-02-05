@@ -25,6 +25,8 @@ object Comment extends WithCommonSqlOperations[Comment] {
 
   override val tableName = "project_track.issue_comments"
 
+  def deleteForUser(userId:Int,commentId:Int): Int =
+    update(sql"delete from $tbl where id=$commentId and author=$userId")
 
   override def sqlExtractor(rs: WrappedResultSet): Comment =
     new Comment(

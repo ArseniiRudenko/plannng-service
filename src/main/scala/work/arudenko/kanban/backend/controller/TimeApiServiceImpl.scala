@@ -1,11 +1,13 @@
 package work.arudenko.kanban.backend.controller
 
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
+import akka.http.scaladsl.server.Directives.authenticateOAuth2
 import akka.http.scaladsl.server.Route
+import com.typesafe.scalalogging.LazyLogging
 import work.arudenko.kanban.backend.api.TimeApiService
-import work.arudenko.kanban.backend.model.{GeneralError, Time}
+import work.arudenko.kanban.backend.model.{Comment, GeneralError, Time}
 
-class TimeApiServiceImpl extends TimeApiService{
+class TimeApiServiceImpl extends TimeApiService  with LazyLogging with AuthenticatedRoute {
   /**
    * Code: 200, Message: successful operation, DataType: Time
    * Code: 400, Message: Invalid message format, DataType: GeneralError
@@ -19,9 +21,18 @@ class TimeApiServiceImpl extends TimeApiService{
    * Code: 404, Message: Record not found
    */
   override def deleteTimeRecord(recordId: Int)(implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route =
-    Time.delete(recordId) match {
-      case 0 => deleteTimeRecord404
-      case _ => deleteTimeRecord200
+    authenticateOAuth2("Global",authenticator) {
+      auth =>
+            if(auth.user.admin)
+              Time.delete(recordId) match {
+                case 0 => deleteTimeRecord404
+                case _ => deleteTimeRecord200
+              }
+            else
+              Time.deleteForUser(auth.user.id,recordId) match {
+                case 0 => deleteTimeRecord404
+                case _ => deleteTimeRecord200
+              }
     }
 
   /**

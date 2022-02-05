@@ -12,7 +12,7 @@ import com.typesafe.config.{Config, ConfigFactory}
 import com.typesafe.scalalogging.LazyLogging
 import scalikejdbc.TxBoundary.Future
 import work.arudenko.kanban.backend.api.UserApiService
-import work.arudenko.kanban.backend.model.{GeneralError, User}
+import work.arudenko.kanban.backend.model.{GeneralError, User, UserCreationInfo}
 
 import java.util.concurrent.TimeUnit
 import scala.concurrent.ExecutionContextExecutor
@@ -27,19 +27,7 @@ class UserApiServiceImpl(actorSystem: ActorSystem) extends UserApiService with L
    * Code: 200, Message: Success
    * Code: 400, Message: Invalid message format, DataType: GeneralError
    */
-  override def createUser(user: User)(implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route = ???
-
-  /**
-   * Code: 200, Message: Success
-   * Code: 400, Message: Invalid message format, DataType: GeneralError
-   */
-  override def createUsersWithArrayInput(user: Seq[User])(implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route = ???
-
-  /**
-   * Code: 400, Message: Invalid message format, DataType: GeneralError
-   * Code: 200, Message: Success
-   */
-  override def createUsersWithListInput(user: Seq[User])(implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route = ???
+  override def createUser(user: UserCreationInfo)(implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route = ???
 
   /**
    * Code: 200, Message: Success
@@ -48,8 +36,8 @@ class UserApiServiceImpl(actorSystem: ActorSystem) extends UserApiService with L
    */
   override def deleteUser(username: String)(implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route =
     User.getId(username) match {
-      case Some(value) => User.delete(value); deleteUser200
-      case None => deleteUser404
+      case Some(value) => User.delete(value); User200
+      case None => User404
     }
 
   /**
@@ -58,16 +46,16 @@ class UserApiServiceImpl(actorSystem: ActorSystem) extends UserApiService with L
    * Code: 404, Message: User not found
    */
   override def getUserByName(username: String)(implicit toEntityMarshallerUser: ToEntityMarshaller[User], toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route =
-    User.getUserData(username) match {
+    User.getUser(username) match {
       case Some(value) => getUserByName200(value)
-      case None => getUserByName404
+      case None => User404
     }
 
-  private def fakeCalculatingAndFuckOff(pw:String)(implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]):Route = {
+  private def fakeCalculatingAndFuckOff(pw: String)(implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route = {
     Credentials(Some(OAuth2BearerToken(pw)))
       .asInstanceOf[Credentials.Provided]
-      .verify(null,pw=>generateArgon2id(pw, "").toBase64)
-    loginUser400(GeneralError(1,"wrong login or password"))
+      .verify(null, pw => generateArgon2id(pw, "").toBase64)
+    User400(GeneralError("wrong login or password"))
   }
 
   import work.arudenko.kanban.backend.orm.RedisContext._
@@ -79,10 +67,10 @@ class UserApiServiceImpl(actorSystem: ActorSystem) extends UserApiService with L
     val sessionToken = generateSalt.toBase64
     scala.concurrent.Future {
       redis.withClient {
-        client => client.set(sessionToken, Pickle.intoBytes(user).array(), Always, Duration.create(4, TimeUnit.HOURS))
+        client => client.set(sessionToken, user, Always, Duration.create(4, TimeUnit.HOURS))(userSerializer)
       }
     }.onComplete {
-      case Failure(exception) => logger.error("failed creating session token",exception)
+      case Failure(exception) => logger.error("failed creating session token", exception)
       case Success(value) => logger.trace(s"created session token, result returned is $value")
     }
     sessionToken
@@ -98,41 +86,36 @@ class UserApiServiceImpl(actorSystem: ActorSystem) extends UserApiService with L
         val creds = Credentials(Some(OAuth2BearerToken(password))).asInstanceOf[Credentials.Provided]
         user.password match {
           case Some(storedPassword) => {
-            val (secret,salt) = storedPassword.splitAt(storedPassword.lastIndexOf(":"))
-            val result = creds.verify(secret,curPw=>generateArgon2id(curPw, salt).toBase64)
-            if (result){
+            val (secret, salt) = storedPassword.splitAt(storedPassword.lastIndexOf(":"))
+            val result = creds.verify(secret, curPw => generateArgon2id(curPw, salt).toBase64)
+            if (result) {
               loginUser200(generateSessionToken(user))
-            }else {
-              loginUser400(GeneralError(1,"wrong login or password"))
+            } else {
+              User400(GeneralError("wrong login or password"))
             }
           }
           case None => fakeCalculatingAndFuckOff(password)
         }
       case None => fakeCalculatingAndFuckOff(password)
     }
+
   /**
    * Code: 200, Message: Success
    * Code: 400, Message: Invalid message format, DataType: GeneralError
    */
   override def logoutUser()(implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route =
-    authenticateOAuth2("Global",authenticator){
-    auth=>
-      redis.withClient {
-        client =>
-          client.del(auth.token) match {
-            case Some(value) if value == 1 => logoutUser200
-            case Some(value) =>
-              logger.warn(s"logout for user ${auth.user} and token ${auth.token} returned value $value, which is not expected")
-              logoutUser400(GeneralError(0,"wtf?"))
-            case None => loginUser400(GeneralError(1,"not logged in"))
-          }
-      }
-  }
+    authenticateOAuth2("Global", authenticator) {
+      auth =>
+        redis.withClient {
+          client =>
+            client.del(auth.token) match {
+              case Some(value) if value == 1 => User200
+              case Some(value) =>
+                logger.warn(s"logout for user ${auth.user} and token ${auth.token} returned value $value, which is not expected")
+                User200
+              case None => User400(GeneralError("not logged in"))
+            }
+        }
+    }
 
-  /**
-   * Code: 200, Message: successful operation, DataType: User
-   * Code: 400, Message: Invalid message format, DataType: GeneralError
-   * Code: 404, Message: User not found
-   */
-  override def updateUser(username: String, user: User)(implicit toEntityMarshallerUser: ToEntityMarshaller[User], toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route = ???
 }

@@ -1,12 +1,13 @@
 package work.arudenko.kanban.backend.controller
 
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
-import akka.http.scaladsl.model.HttpHeader.ParsingResult.Ok
+import akka.http.scaladsl.server.Directives.authenticateOAuth2
 import akka.http.scaladsl.server.Route
+import com.typesafe.scalalogging.LazyLogging
 import work.arudenko.kanban.backend.api.CommentApiService
 import work.arudenko.kanban.backend.model.{Comment, GeneralError}
 
-class CommentApiServiceImpl extends CommentApiService{
+class CommentApiServiceImpl extends CommentApiService  with LazyLogging with AuthenticatedRoute{
   /**
    * Code: 200, Message: successful operation, DataType: Comment
    * Code: 400, Message: Invalid message format, DataType: GeneralError
@@ -20,9 +21,14 @@ class CommentApiServiceImpl extends CommentApiService{
    * Code: 404, Message: Task not found
    */
   override def deleteComment(commentId: Int)(implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route =
-    Comment.delete(commentId) match {  //TODO: only allow user to remove his own comments
-      case 0 => deleteComment404
-      case _ => deleteComment200
+    authenticateOAuth2("Global",authenticator) {
+      auth =>
+        if(auth.user.admin)
+          Comment.delete(commentId) match {
+            case 0 => Comment404
+            case _ => deleteComment200
+          }
+        else deleteComment403
     }
 
   /**

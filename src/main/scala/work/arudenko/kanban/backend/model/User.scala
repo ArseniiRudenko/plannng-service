@@ -12,38 +12,60 @@ import work.arudenko.kanban.backend.orm.WithCommonSqlOperations
  * @param phone  for example: ''null''
 */
 final case class User (
-  id: Option[Int],
-  firstName: Option[String],
+  id:Int,
+  firstName: String,
   lastName: Option[String],
   email: Option[String],
   password: Option[String],
   phone: Option[String],
+  enabled:Boolean,
+  admin:Boolean
 )
+
+final case class UserCreationInfo (
+  firstName: String,
+  lastName: Option[String],
+  email: String,
+  password: String,
+  phone: Option[String]
+)
+
+final case class UserUpdateInfo (
+  firstName: Option[String],
+  lastName: Option[String],
+  email: Option[String],
+  password: String,
+  newPassword:Option[String],
+  phone: Option[String]
+)
+
+final case class UserInfo(
+  firstName: String,
+  lastName: Option[String],
+  email: Option[String],
+  phone: Option[String],
+  enabled:Boolean,
+  admin:Boolean
+)
+
+
 
 object User extends WithCommonSqlOperations[User]{
   override def sqlExtractor(rs: WrappedResultSet): User =
     new User(
-      Some(rs.int("id")),
-      Some(rs.string("first_name")),
+      rs.int("id"),
+      rs.string("first_name"),
       rs.stringOpt("last_name"),
       rs.stringOpt("email"),
       rs.stringOpt("password"),
-      rs.stringOpt("phone")
+      rs.stringOpt("phone"),
+      rs.boolean("enabled"),
+      rs.boolean("admin")
     )
-
-  def userInfoExtractor(rs: WrappedResultSet): User =
-    new User(
-      None,
-      Some(rs.string("first_name")),
-      rs.stringOpt("last_name"),
-      rs.stringOpt("email"),
-      None,
-      rs.stringOpt("phone")
-    )
-
-  def getUserData(email:String): Option[User] = getOne(sql" select * from $tbl where email=$email",userInfoExtractor)
 
   def getLoginUser(email:String): Option[User] = getOne(sql" select * from $tbl where email=$email and enabled=true")
+
+  def getUser(email:String): Option[User] = getOne(sql" select * from $tbl where email=$email")
 
   def getId(email:String): Option[Int] =
     DB readOnly { implicit session =>

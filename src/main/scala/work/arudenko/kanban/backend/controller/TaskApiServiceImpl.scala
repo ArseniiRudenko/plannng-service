@@ -1,14 +1,16 @@
 package work.arudenko.kanban.backend.controller
 
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
+import akka.http.scaladsl.server.Directives.authenticateOAuth2
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.directives.FileInfo
+import com.typesafe.scalalogging.LazyLogging
 import work.arudenko.kanban.backend.api.TaskApiService
 import work.arudenko.kanban.backend.model.{GeneralError, Tag, Task}
 
 import java.io.File
 
-class TaskApiServiceImpl extends TaskApiService{
+class TaskApiServiceImpl extends TaskApiService with LazyLogging with AuthenticatedRoute{
   /**
    * Code: 200, Message: successful task operation, DataType: Task
    * Code: 400, Message: Invalid message format, DataType: GeneralError
@@ -21,9 +23,18 @@ class TaskApiServiceImpl extends TaskApiService{
    * Code: 404, Message: Task not found
    */
   override def deleteTask(taskId: Int)(implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route =
-    Task.delete(taskId) match {
-      case 0 => deleteTask404
-      case _ => deleteTask200
+    authenticateOAuth2("Global",authenticator) {
+      auth =>
+        if (auth.user.admin)
+          Task.delete(taskId) match {
+            case 0 => Task404
+            case _ => deleteTask200
+          }
+        else
+          Task.delete(taskId) match {
+            case 0 => Task404
+            case _ => deleteTask200
+          }
     }
 
   /**
@@ -47,7 +58,7 @@ class TaskApiServiceImpl extends TaskApiService{
   override def getTaskById(taskId: Int)(implicit toEntityMarshallerTask: ToEntityMarshaller[Task], toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route =
     Task.get(taskId) match {
       case Some(value) => getTaskById200(value)
-      case None => getTaskById404
+      case None => Task404
     }
 
 
