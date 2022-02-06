@@ -35,7 +35,7 @@ class UserApi(
     } ~
     path("user" / "createWithArray") { 
       post {  
-            entity(as[Seq[UserCreationInfo]]){ user =>
+            entity(as[Seq[UserInfo]]){ user =>
               userService.createUsersWithArrayInput(user = user)
             }
       }
@@ -55,11 +55,19 @@ class UserApi(
         }
       }
     } ~
+    path("user" / "login"/ "reset"/ Segment) { resetToken =>
+    post {
+          entity(as[String]) { newPassword =>
+            userService.resetPassword(resetToken, newPassword)
+          }
+        }
+      }
     path("user" / "logout") { 
       get {  
             userService.logoutUser()
       }
     }
+
 }
 
 
@@ -89,7 +97,7 @@ trait UserApiService {
    * Code: 200, Message: Success
    * Code: 400, Message: Invalid message format, DataType: GeneralError
    */
-  def createUsersWithArrayInput(user: Seq[UserCreationInfo])
+  def createUsersWithArrayInput(user: Seq[UserInfo])
       (implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route
 
   /**
@@ -125,6 +133,10 @@ trait UserApiService {
   def logoutUser()
       (implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route
 
+
+  def resetPassword(resetToken: String,newPassword:String)
+                   (implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route
+
   /**
    * Code: 200, Message: successful operation, DataType: User
    * Code: 400, Message: Invalid message format, DataType: GeneralError
@@ -138,7 +150,7 @@ trait UserApiService {
 trait UserApiMarshaller {
   implicit def fromEntityUnmarshallerUserCreate: FromEntityUnmarshaller[UserCreationInfo]
   implicit def fromEntityUnmarshallerUserUpdate: FromEntityUnmarshaller[UserUpdateInfo]
-  implicit def fromEntityUnmarshallerUserList: FromEntityUnmarshaller[Seq[UserCreationInfo]]
+  implicit def fromEntityUnmarshallerUserList: FromEntityUnmarshaller[Seq[UserInfo]]
   implicit def toEntityMarshallerUserInfo: ToEntityMarshaller[UserInfo]
   implicit def toEntityMarshallerUser: ToEntityMarshaller[User]
   implicit def toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]

@@ -43,7 +43,7 @@ class TaskApiServiceImpl extends TaskApiService with LazyLogging with Authentica
    */
   override def findTaskByStatus(status: String)(implicit toEntityMarshallerTaskarray: ToEntityMarshaller[Seq[Task]], toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route =
     authenticateOAuth2("Global",authenticator) {
-      auth =>
+      _ =>
         findTaskByStatus200(Task.getByStatus(status))
     }
   /**
@@ -52,7 +52,7 @@ class TaskApiServiceImpl extends TaskApiService with LazyLogging with Authentica
    */
   override def findTasksByTags(tags: String)(implicit toEntityMarshallerTaskarray: ToEntityMarshaller[Seq[Task]], toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route =
     authenticateOAuth2("Global",authenticator) {
-      auth =>
+      _ =>
         findTasksByTags200(Task.getByTagIds(Tag.getTagsByName(tags).map(tag => tag.id.get)))
     }
   /**
@@ -62,7 +62,7 @@ class TaskApiServiceImpl extends TaskApiService with LazyLogging with Authentica
    */
   override def getTaskById(taskId: Int)(implicit toEntityMarshallerTask: ToEntityMarshaller[Task], toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route =
     authenticateOAuth2("Global",authenticator) {
-      auth =>
+      _ =>
         Task.get(taskId) match {
           case Some(value) => getTaskById200(value)
           case None => Task404

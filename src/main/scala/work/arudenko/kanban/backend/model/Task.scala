@@ -64,4 +64,9 @@ object Task extends WithCommonSqlOperations[Task] {
   def updateStatus(taskId:Int,userId:Int,status:String): Int =
     update(sql"insert into project_track.issue_status_log(status,issue,created_by)  values ($status::project_track.status,$taskId,$userId)")
 
+  def addNew(task:Task)  = {
+    val id= insert(sql"insert into $tbl (header,description,priority,parent,deadline,assignee,estimated_time,status) values(${task.header},${task.description},${task.priority},${task.parentId},${task.deadline},${task.assigneeId},${task.estimatedTime},${task.status})")
+    ??? //insert tags into tag to issue table
+   }
+
 }

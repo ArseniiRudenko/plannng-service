@@ -34,7 +34,7 @@ final case class UserCreationInfo (
 final case class UserUpdateInfo (
   firstName: Option[String],
   lastName: Option[String],
-  email: Option[String],
+  email: String,
   password: String,
   newPassword:Option[String],
   phone: Option[String]

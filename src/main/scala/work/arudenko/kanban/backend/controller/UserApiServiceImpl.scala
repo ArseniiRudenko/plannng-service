@@ -130,7 +130,7 @@ class UserApiServiceImpl(actorSystem: ActorSystem) extends UserApiService with L
    * Code: 200, Message: Success
    * Code: 400, Message: Invalid message format, DataType: GeneralError
    */
-  override def createUsersWithArrayInput(user: Seq[UserCreationInfo])(implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route =
+  override def createUsersWithArrayInput(user: Seq[UserInfo])(implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route =
     authenticateOAuth2("Global", authenticator) {
       auth =>
         if(auth.user.admin)
@@ -144,4 +144,6 @@ class UserApiServiceImpl(actorSystem: ActorSystem) extends UserApiService with L
    * Code: 404, Message: User not found
    */
   override def updateUser(user: UserUpdateInfo)(implicit toEntityMarshallerUser: ToEntityMarshaller[User], toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route = ???
+
+  override def resetPassword(resetToken: String, newPassword: String)(implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route = ???
 }

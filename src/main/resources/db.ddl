@@ -201,6 +201,9 @@ create table tag_to_issue
 alter table tag_to_issue
     owner to postgres;
 
+create unique index tag_to_issue_tag_id_issue_id_uindex
+    on tag_to_issue (tag_id, issue_id);
+
 create view chlid_issue_count_per_status(parent, cur_status, count) as
 SELECT issues.parent,
        issues.cur_status,
