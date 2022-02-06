@@ -14,4 +14,10 @@ class CommentSpec extends AnyFlatSpec with should.Matchers {
     cmntsLst.length should be >1
   }
 
+  it should "get comment by id" in{
+    val cmt = Comment.get(1)
+    println(cmt)
+    cmt.isDefined shouldBe true
+  }
+
 }

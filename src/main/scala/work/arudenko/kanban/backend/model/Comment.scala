@@ -14,10 +14,10 @@ import scala.collection.immutable
  * @param createdAt  for example: ''null''
 */
 final case class Comment (
-  id: Option[Int],
+  id: Int,
   text: String,
-  author: Option[Int],
-  createdAt: Option[OffsetDateTime]
+  author: UserInfo,
+  createdAt: OffsetDateTime
 )
 
 
@@ -25,17 +25,31 @@ object Comment extends WithCommonSqlOperations[Comment] {
 
   override val tableName = "project_track.issue_comments"
 
+  protected override val curSyntax = syntax("c")
+
   def deleteForUser(userId:Int,commentId:Int): Int =
     update(sql"delete from $tbl where id=$commentId and author=$userId")
 
   override def sqlExtractor(rs: WrappedResultSet): Comment =
     new Comment(
-    Some(rs.int("id")),
+    rs.int("id"),
     rs.string("content"),
-    rs.intOpt("author"),
-    Some(rs.offsetDateTime("created_at")))
+    UserInfo(User.sqlExtractor(rs)),
+    rs.offsetDateTime("created_at"))
 
   def getByIssueId(issueId:Int): immutable.Seq[Comment] =
-    getList(sql"select * from $tbl where issue=$issueId")
+    getList(sql"select * from $tbl join ${User.tbl} on c.author=m.id where issue=$issueId")
+
+  override def get(id: Int): Option[Comment] =
+    getOne(sql"select * from $tbl join ${User.tbl} on c.author=m.id where c.id=$id")
+
+
+  def create(userId:Int,taskId:Int,text:String): Long =
+    insert(sql"insert into $tbl (author,content,issue) values($userId,$text,$taskId)")
+
+
+  def updateTextWithUserCheck(comment:Comment): Int ={
+    update(sql"update $tbl set text=${comment.text} from ${User.tbl} where c.id=${comment.id} and c.author=u.id and u.email=${comment.author.email}")
+  }
 
 }

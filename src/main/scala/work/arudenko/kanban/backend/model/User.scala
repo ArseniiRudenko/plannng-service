@@ -1,6 +1,7 @@
 package work.arudenko.kanban.backend.model
 
 import scalikejdbc._
+import work.arudenko.kanban.backend.model.Comment.syntax
 import work.arudenko.kanban.backend.orm.WithCommonSqlOperations
 
 /**
@@ -61,6 +62,10 @@ object UserInfo{
 }
 
 object User extends WithCommonSqlOperations[User]{
+
+  override val tableName="project_track.peoples"
+  protected override val curSyntax = syntax("u")
+
   override def sqlExtractor(rs: WrappedResultSet): User =
     new User(
       rs.int("id"),
@@ -69,8 +74,8 @@ object User extends WithCommonSqlOperations[User]{
       rs.stringOpt("email"),
       rs.stringOpt("password"),
       rs.stringOpt("phone"),
-      rs.boolean("enabled"),
-      rs.boolean("admin")
+      rs.boolean("is_enabled"),
+      rs.boolean("is_admin")
     )
 
   def getLoginUser(email:String): Option[User] = getOne(sql" select * from $tbl where email=$email and enabled=true")

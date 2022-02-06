@@ -23,6 +23,11 @@ trait WithCommonSqlOperations[T] extends SQLSyntaxSupport[T] {
     DB autoCommit { implicit session =>
       sql.update.apply()
     }
+  protected def insert(sql:SQL[T,NoExtractor]): Long =
+    DB autoCommit { implicit session =>
+      sql.updateAndReturnGeneratedKey.apply()
+    }
+
 
   protected def getOne(sql:SQL[T,NoExtractor],extractor: WrappedResultSet=>T = sqlExtractor): Option[T] =
     DB readOnly { implicit session =>
@@ -33,7 +38,7 @@ trait WithCommonSqlOperations[T] extends SQLSyntaxSupport[T] {
 
   protected val curSyntax: scalikejdbc.QuerySQLSyntaxProvider[scalikejdbc.SQLSyntaxSupport[T], T] = syntax("m")
 
-  protected def tbl: scalikejdbc.TableAsAliasSQLSyntax =this.as(curSyntax)
+  def tbl: scalikejdbc.TableAsAliasSQLSyntax =this.as(curSyntax)
 
   def delete(id:Int): Int = update(sql"delete from $tbl where id=$id")
 

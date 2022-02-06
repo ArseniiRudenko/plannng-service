@@ -22,19 +22,17 @@ class CommentApi(
   lazy val route: Route =
     path("task" / IntNumber / "comment") { (taskId) => 
       post {  
-            entity(as[Comment]){ comment =>
+            entity(as[String]){ comment =>
               commentService.addComment(taskId = taskId, comment = comment)
             }
+      }~
+      get {
+          commentService.getComments(taskId = taskId)
       }
     } ~
     path("comment" / IntNumber) { (commentId) => 
       delete {  
             commentService.deleteComment(commentId = commentId)
-      }
-    } ~
-    path("task" / IntNumber / "comment") { (taskId) => 
-      get {  
-            commentService.getComments(taskId = taskId)
       }
     } ~
     path("comment") { 
@@ -49,27 +47,29 @@ class CommentApi(
 
 trait CommentApiService {
 
-  def addComment200(responseComment: Comment)(implicit toEntityMarshallerComment: ToEntityMarshaller[Comment]): Route =
+  def Comment200(responseComment: Comment)(implicit toEntityMarshallerComment: ToEntityMarshaller[Comment]): Route =
     complete((200, responseComment))
-  def addComment400(responseGeneralError: GeneralError)(implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route =
-    complete((400, responseGeneralError))
-  def Comment404: Route =
+
+  val Comment200: Route =
+    complete((200, "Success"))
+  val Comment404: Route =
     complete((404, "Task not found"))
+  val Comment403: Route =
+    complete((403, "Current user is not authorized to do that"))
+
+
+  def Comment400(responseGeneralError: GeneralError)(implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route =
+    complete((400, responseGeneralError))
+
   /**
    * Code: 200, Message: successful operation, DataType: Comment
    * Code: 400, Message: Invalid message format, DataType: GeneralError
    * Code: 404, Message: Task not found
    */
-  def addComment(taskId: Int, comment: Comment)
+  def addComment(taskId: Int, comment: String)
       (implicit toEntityMarshallerComment: ToEntityMarshaller[Comment], toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route
 
-  def deleteComment200: Route =
-    complete((200, "successful operation"))
-  def deleteComment400(responseGeneralError: GeneralError)(implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route =
-    complete((400, responseGeneralError))
 
-  def deleteComment403: Route =
-    complete((403, "Only admins can remove tasks"))
   /**
    * Code: 200, Message: successful operation
    * Code: 400, Message: Invalid message format, DataType: GeneralError
@@ -80,8 +80,7 @@ trait CommentApiService {
 
   def getComments200(responseCommentarray: Seq[Comment])(implicit toEntityMarshallerCommentarray: ToEntityMarshaller[Seq[Comment]]): Route =
     complete((200, responseCommentarray))
-  def getComments400(responseGeneralError: GeneralError)(implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route =
-    complete((400, responseGeneralError))
+
 
   /**
    * Code: 200, Message: successful operation, DataType: Seq[Comment]
@@ -91,10 +90,6 @@ trait CommentApiService {
   def getComments(taskId: Int)
       (implicit toEntityMarshallerCommentarray: ToEntityMarshaller[Seq[Comment]], toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route
 
-  def updateComment200(responseComment: Comment)(implicit toEntityMarshallerComment: ToEntityMarshaller[Comment]): Route =
-    complete((200, responseComment))
-  def updateComment400(responseGeneralError: GeneralError)(implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route =
-    complete((400, responseGeneralError))
   /**
    * Code: 200, Message: successful operation, DataType: Comment
    * Code: 400, Message: Invalid message format, DataType: GeneralError

@@ -72,11 +72,11 @@ trait UserApiService {
   def createUser(user: UserCreationInfo)
       (implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route
 
-  def User200: Route =
+  val User200: Route =
     complete((200, "Success"))
-  def User404: Route =
+  val User404: Route =
     complete((404, "User not found"))
-  def User403: Route =
+  val User403: Route =
     complete((403, "Current user is not authorized to do that"))
 
   def User400(responseGeneralError: GeneralError)(implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route =

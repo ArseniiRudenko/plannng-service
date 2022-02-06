@@ -16,13 +16,14 @@ create table peoples
     id         serial
         constraint peoples_pk
             primary key,
-    first_name varchar               not null,
+    first_name varchar                                not null,
     last_name  varchar,
     email      varchar,
     password   varchar,
     phone      varchar,
-    is_enabled boolean default false not null,
-    is_admin   boolean default false not null
+    is_enabled boolean                  default false not null,
+    is_admin   boolean                  default false not null,
+    created_at timestamp with time zone default now() not null
 );
 
 alter table peoples
@@ -124,7 +125,7 @@ create table issue_comments
             primary key,
     created_at timestamp with time zone default now() not null,
     updated_at timestamp with time zone default now() not null,
-    author     integer
+    author     integer                                not null
         constraint issue_comments_peoples_id_fk
             references peoples
             on update cascade on delete set null,
