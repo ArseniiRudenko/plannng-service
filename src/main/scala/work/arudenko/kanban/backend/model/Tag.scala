@@ -33,7 +33,7 @@ object Tag extends WithCommonSqlOperations[Tag]{
     )
 
   def getTagsByName(strMatch:String): immutable.Seq[Tag] =
-    getList(sql"select * from $tbl where name ~ $strMatch")
+    getList(sql"select * from $table where name ~ $strMatch")
 
 }
 

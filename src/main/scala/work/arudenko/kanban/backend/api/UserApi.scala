@@ -56,12 +56,12 @@ class UserApi(
       }
     } ~
     path("user" / "login"/ "reset"/ Segment) { resetToken =>
-    post {
+      post {
           entity(as[String]) { newPassword =>
             userService.resetPassword(resetToken, newPassword)
           }
-        }
       }
+    } ~
     path("user" / "logout") { 
       get {  
             userService.logoutUser()

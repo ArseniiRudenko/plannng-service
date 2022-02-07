@@ -28,7 +28,7 @@ object Comment extends WithCommonSqlOperations[Comment] {
   protected override val curSyntax = syntax("c")
 
   def deleteForUser(userId:Int,commentId:Int): Int =
-    update(sql"delete from $tbl where id=$commentId and author=$userId")
+    update(sql"delete from $table where id=$commentId and author=$userId")
 
   override def sqlExtractor(rs: WrappedResultSet): Comment =
     new Comment(
@@ -38,14 +38,14 @@ object Comment extends WithCommonSqlOperations[Comment] {
     rs.offsetDateTime("created_at"))
 
   def getByIssueId(issueId:Int): immutable.Seq[Comment] =
-    getList(sql"select * from $tbl join ${User.tbl} on c.author=m.id where issue=$issueId")
+    getList(sql"select * from $tbl join ${User.tbl} on c.author=u.id where issue=$issueId")
 
   override def get(id: Int): Option[Comment] =
-    getOne(sql"select * from $tbl join ${User.tbl} on c.author=m.id where c.id=$id")
+    getOne(sql"select * from $tbl join ${User.tbl} on c.author=u.id where c.id=$id")
 
 
   def create(userId:Int,taskId:Int,text:String): Long =
-    insert(sql"insert into $tbl (author,content,issue) values($userId,$text,$taskId)")
+    insert(sql"insert into $table (author,content,issue) values($userId,$text,$taskId)")
 
 
   def updateTextWithUserCheck(comment:Comment): Int ={

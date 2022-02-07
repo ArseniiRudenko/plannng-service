@@ -2,9 +2,11 @@ package work.arudenko.kanban.backend.model
 
 import org.postgresql.util.PGInterval
 import scalikejdbc._
+import work.arudenko.kanban.backend.orm.SqlContext.TryLogged
 import work.arudenko.kanban.backend.orm.WithCommonSqlOperations
 
 import java.time.OffsetDateTime
+import scala.util.Try
 
 /**
  * @param id  for example: ''null''
@@ -19,16 +21,16 @@ import java.time.OffsetDateTime
  * @param status task status for example: ''null''
 */
 final case class Task (
-  id: Option[Int],
+  id: Option[Int] = None,
   header: String,
-  description: Option[String],
-  priority:String,
-  parentId: Option[Int],
-  deadline: Option[OffsetDateTime],
-  assigneeId: Option[Int],
-  estimatedTime: Option[Int],
-  tags: Seq[Tag],
-  status: Option[String])
+  description: Option[String] = None,
+  priority:String = "low",
+  parentId: Option[Int] = None,
+  deadline: Option[OffsetDateTime] = None,
+  assigneeId: Option[Int] = None,
+  estimatedTime: Option[Int] = None,
+  tags: Seq[Tag] = Nil,
+  status: Option[String] = None)
 
 object Task extends WithCommonSqlOperations[Task] {
 
@@ -64,9 +66,31 @@ object Task extends WithCommonSqlOperations[Task] {
   def updateStatus(taskId:Int,userId:Int,status:String): Int =
     update(sql"insert into project_track.issue_status_log(status,issue,created_by)  values ($status::project_track.status,$taskId,$userId)")
 
-  def addNew(task:Task)  = {
-    val id= insert(sql"insert into $tbl (header,description,priority,parent,deadline,assignee,estimated_time,status) values(${task.header},${task.description},${task.priority},${task.parentId},${task.deadline},${task.assigneeId},${task.estimatedTime},${task.status})")
-    ??? //insert tags into tag to issue table
-   }
+  def addNew(task:Task,createdBy:Int): Option[Long] =Try(
+    DB localTx { implicit session =>
+      val id =
+        sql"""insert into $table (header,description,priority,parent,deadline,assignee,estimated_time,cur_status,created_by)
+             values(${task.header},
+                    ${task.description},
+                    ${task.priority}::project_track.priority,
+                    ${task.parentId},
+                    ${task.deadline},
+                    ${task.assigneeId},
+                    ${task.estimatedTime},
+                    ${task.status.getOrElse("backlog")}::project_track.status,
+                    ${createdBy})
+                    """
+      .updateAndReturnGeneratedKey.apply()
+
+      sql"insert into project_track.tag_to_issue (tag_id, issue_id) values ({tag}, {issue})"
+        .batchByName(
+          task.tags.flatMap(tag => tag.id match {
+          case Some(value) => Seq(Seq("tag"->value,"issue"->id))
+          case None => Nil
+        }):_*)
+        .apply()
+      id//insert tags into tag to issue table
+    }).toOptionLogged
+
 
 }

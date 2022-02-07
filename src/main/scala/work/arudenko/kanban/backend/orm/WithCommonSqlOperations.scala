@@ -2,8 +2,6 @@ package work.arudenko.kanban.backend.orm
 import org.postgresql.util.PGInterval
 import scalikejdbc._
 import scalikejdbc.WrappedResultSet
-import work.arudenko.kanban.backend.model.Comment.{sqlExtractor, tbl}
-
 import java.sql.ResultSet
 
 trait WithCommonSqlOperations[T] extends SQLSyntaxSupport[T] {
@@ -29,6 +27,7 @@ trait WithCommonSqlOperations[T] extends SQLSyntaxSupport[T] {
     }
 
 
+
   protected def getOne(sql:SQL[T,NoExtractor],extractor: WrappedResultSet=>T = sqlExtractor): Option[T] =
     DB readOnly { implicit session =>
       sql.map(rs => extractor(rs)).single.apply()
@@ -40,8 +39,8 @@ trait WithCommonSqlOperations[T] extends SQLSyntaxSupport[T] {
 
   def tbl: scalikejdbc.TableAsAliasSQLSyntax =this.as(curSyntax)
 
-  def delete(id:Int): Int = update(sql"delete from $tbl where id=$id")
+  def delete(id:Int): Int = update(sql"delete from $table where id=$id")
 
-  def get(id:Int): Option[T] = getOne(sql"select * from $tbl where id=$id")
+  def get(id:Int): Option[T] = getOne(sql"select * from $table where id=$id")
 
 }

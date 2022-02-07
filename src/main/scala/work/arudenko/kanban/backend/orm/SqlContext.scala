@@ -2,9 +2,12 @@ package work.arudenko.kanban.backend.orm
 
 import org.postgresql.util.PGInterval
 import com.typesafe.config.ConfigFactory
-import java.sql.ResultSet
+import com.typesafe.scalalogging.LazyLogging
 
-object SqlContext {
+import java.sql.ResultSet
+import scala.util.{Failure, Success, Try}
+
+object SqlContext  extends LazyLogging{
   import scalikejdbc._
 
   import com.typesafe.config.Config
@@ -16,7 +19,11 @@ object SqlContext {
 
   ConnectionPool.singleton(conf.getString("jdbc.url"), conf.getString("jdbc.user"), conf.getString("jdbc.password"))
 
-
-
+  implicit class TryLogged[T](val param:Try[T]) extends AnyVal {
+    def toOptionLogged:Option[T] = param match {
+      case Failure(exception) => logger.error("exception processing db call",exception);None
+      case Success(value) => Some(value)
+    }
+  }
 
 }
