@@ -7,13 +7,21 @@ import com.typesafe.scalalogging.LazyLogging
 import work.arudenko.kanban.backend.api.TimeApiService
 import work.arudenko.kanban.backend.model.{Comment, GeneralError, Time}
 
-class TimeApiServiceImpl extends TimeApiService  with LazyLogging with AuthenticatedRoute {
+class TimeApiServiceImpl extends TimeApiService  with GenericApi[Time] {
   /**
    * Code: 200, Message: successful operation, DataType: Time
    * Code: 400, Message: Invalid message format, DataType: GeneralError
    * Code: 404, Message: Task not found
    */
-  override def addTime(taskId: Int, time: Time)(implicit toEntityMarshallerTime: ToEntityMarshaller[Time], toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route = ???
+  override def addTime(taskId: Int, time: Time)(implicit toEntityMarshallerTime: ToEntityMarshaller[Time], toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route = {
+    authenticateOAuth2("Global",authenticator) {
+      auth =>
+        Time.add(auth.user.id, taskId, record = time) match {
+          case Some(value) => addTime200(time.copy(id=Some(value.toInt)))
+          case None => addTime400(GeneralError("incorrect value"))
+        }
+    }
+  }
 
   /**
    * Code: 200, Message: Success
@@ -52,4 +60,7 @@ class TimeApiServiceImpl extends TimeApiService  with LazyLogging with Authentic
       case Some(value) => getTimeRecordById200(value)
       case None => getTimeRecordById404
     }
+
+  override def updateTime(taskId: Int, time: Time)
+                         (implicit toEntityMarshallerTime: ToEntityMarshaller[Time], toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route = ???
 }

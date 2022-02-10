@@ -64,7 +64,6 @@ object UserInfo{
 object User extends WithCommonSqlOperations[User]{
 
   override val tableName="project_track.peoples"
-  protected override val curSyntax = syntax("u")
 
   override def sqlExtractor(rs: WrappedResultSet): User =
     new User(
@@ -78,13 +77,21 @@ object User extends WithCommonSqlOperations[User]{
       rs.boolean("is_admin")
     )
 
-  def getLoginUser(email:String): Option[User] = getOne(sql" select * from $tbl where email=$email and enabled=true")
+  def getLoginUser(email:String): Option[User] = getOne(sql" select * from $table where email=$email and enabled=true")
 
-  def getUser(email:String): Option[User] = getOne(sql" select * from $tbl where email=$email")
+  def getUser(email:String): Option[User] = getOne(sql" select * from $table where email=$email")
 
   def getId(email:String): Option[Int] =
     DB readOnly { implicit session =>
-      sql" select id from $tbl where email=$email ".map(rs=>rs.int("id")).single.apply()
+      sql" select id from $table where email=$email ".map(rs=>rs.int("id")).single.apply()
     }
+
+  def createUsers(users:Seq[UserInfo]) = ???
+
+  def createUser(users:UserInfo) = ???
+
+  def signUp(user:UserCreationInfo) = ???
+
+  def updateUser(userUpdateInfo: UserUpdateInfo) = ???
 
 }

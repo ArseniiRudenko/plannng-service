@@ -70,12 +70,12 @@ trait AuthenticatedRoute {
 
   val authenticator:Authenticator[ValidAuth] = {
     case Credentials.Missing => None
-    case p:Credentials.Provided => {
+    case p:Credentials.Provided =>
       redis.withClient {
         client => client.get[User](p.identifier).map(u=>ValidAuth(p.identifier,u))
       }
-    }
   }
+
 
 
 }

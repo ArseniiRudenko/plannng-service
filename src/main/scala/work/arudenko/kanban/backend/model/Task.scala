@@ -3,10 +3,10 @@ package work.arudenko.kanban.backend.model
 import org.postgresql.util.PGInterval
 import scalikejdbc._
 import work.arudenko.kanban.backend.orm.SqlContext.TryLogged
+import scala.util.Try
 import work.arudenko.kanban.backend.orm.WithCommonSqlOperations
 
 import java.time.OffsetDateTime
-import scala.util.Try
 
 /**
  * @param id  for example: ''null''
@@ -51,16 +51,16 @@ object Task extends WithCommonSqlOperations[Task] {
     )
 
   def getByStatus(status:String): Seq[Task] =
-    getList(sql"select * from $tbl where cur_status=$status::project_track.status")
+    getList(sql"select * from $table where cur_status=$status::project_track.status")
 
   def getByTagId(id:Int): Seq[Task] =
-    getList(sql"select m.* from $tbl  join  project_track.tag_to_issue b on m.id=b.issue_id where b.tag_id=$id")
+    getList(sql"select m.* from $table m  join  project_track.tag_to_issue b on m.id=b.issue_id where b.tag_id=$id")
 
   def getByTagIds(id:Seq[Int]): Seq[Task] =
-    getList(sql"select m.* from $tbl  join  project_track.tag_to_issue b on m.id=b.issue_id where b.tag_id in ${id}")
+    getList(sql"select m.* from $table m  join  project_track.tag_to_issue b on m.id=b.issue_id where b.tag_id in ${id}")
 
   def getByHeader(header:String): Seq[Task] =DB readOnly { implicit session =>
-    getList(sql"select * from $tbl where header ~ $header")
+    getList(sql"select * from $table where header ~ $header")
   }
 
   def updateStatus(taskId:Int,userId:Int,status:String): Int =
@@ -81,7 +81,7 @@ object Task extends WithCommonSqlOperations[Task] {
                     ${createdBy})
                     """
       .updateAndReturnGeneratedKey.apply()
-
+      //insert tags into tag to issue table
       sql"insert into project_track.tag_to_issue (tag_id, issue_id) values ({tag}, {issue})"
         .batchByName(
           task.tags.flatMap(tag => tag.id match {
@@ -89,8 +89,29 @@ object Task extends WithCommonSqlOperations[Task] {
           case None => Nil
         }):_*)
         .apply()
-      id//insert tags into tag to issue table
+      id
     }).toOptionLogged
 
+
+  //TODO: allow updating header and description only by creator or admin
+  def updateTask(task:Task, updatedBy:Int): Option[Int] = {
+    task.id.flatMap(id=>
+    Try(update(
+      sql"""
+        update $table
+        set
+             header=${task.header},
+             description=${task.description},
+             priority=${task.priority}::project_track.priority,
+             parent=${task.parentId},
+             deadline=${task.deadline},
+             assignee=${task.assigneeId},
+             estimated_time=${task.estimatedTime},
+             cur_status=${task.status.getOrElse("backlog")}::project_track.status,
+             updated_by=${updatedBy}
+        where id=$id
+         """)).toOptionLogged
+    )
+  }
 
 }

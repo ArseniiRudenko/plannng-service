@@ -15,8 +15,14 @@ class TaskApiServiceImpl extends TaskApiService with LazyLogging with Authentica
    * Code: 200, Message: successful task operation, DataType: Task
    * Code: 400, Message: Invalid message format, DataType: GeneralError
    */
-  override def addTask(task: Task)(implicit toEntityMarshallerTask: ToEntityMarshaller[Task], toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route = ???
-
+  override def addTask(task: Task)(implicit toEntityMarshallerTask: ToEntityMarshaller[Task], toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route =
+    authenticateOAuth2("Global",authenticator) {
+      auth =>
+        Task.addNew(task, auth.user.id) match {
+          case Some(value) => addTask200(task.copy(id=Some(value.toInt)))
+          case None => addTask400(GeneralError("incorrect task parameters"))
+        }
+    }
   /**
    * Code: 200, Message: successful operation
    * Code: 400, Message: Invalid message format, DataType: GeneralError
@@ -75,7 +81,20 @@ class TaskApiServiceImpl extends TaskApiService with LazyLogging with Authentica
    * Code: 404, Message: Task not found
    * Code: 400, Message: Invalid message format, DataType: GeneralError
    */
-  override def updateTask(task: Task)(implicit toEntityMarshallerTask: ToEntityMarshaller[Task], toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route = ???
+  override def updateTask(task: Task)(implicit toEntityMarshallerTask: ToEntityMarshaller[Task], toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route =
+    authenticateOAuth2("Global",authenticator) {
+      auth =>
+        Task.updateTask(task, auth.user.id) match {
+          case Some(value) => value match {
+            case 1 => updateTask200(task)
+            case 0 => Task404
+            case v =>
+              logger.error(s" unexpected number of updated tasks $v when updating task $task by user $auth.user")
+              updateTask400(GeneralError("task update gone wrong, contact support"))
+          }
+          case None => updateTask400(GeneralError("incorrect update request"))
+        }
+    }
 
   /**
    * Code: 400, Message: Invalid message format, DataType: GeneralError

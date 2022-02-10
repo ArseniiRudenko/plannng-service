@@ -26,6 +26,11 @@ class TimeApi(
               timeService.addTime(taskId = taskId, time = time)
             }
       } ~
+      put {
+          entity(as[Time]){ time =>
+            timeService.updateTime(taskId = taskId, time = time)
+          }
+      } ~
       get {
         timeService.getTime(taskId = taskId)
       }
@@ -36,12 +41,14 @@ class TimeApi(
       }~
       get {
           timeService.getTimeRecordById(recordId = recordId)
-        }
+      }
     }
 }
 
 
 trait TimeApiService {
+  def updateTime(taskId: Int, time: Time)
+                (implicit toEntityMarshallerTime: ToEntityMarshaller[Time], toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route
 
   def addTime200(responseTime: Time)(implicit toEntityMarshallerTime: ToEntityMarshaller[Time]): Route =
     complete((200, responseTime))
@@ -103,8 +110,6 @@ trait TimeApiService {
 
 trait TimeApiMarshaller {
   implicit def fromEntityUnmarshallerTime: FromEntityUnmarshaller[Time]
-
-
 
   implicit def toEntityMarshallerTime: ToEntityMarshaller[Time]
 

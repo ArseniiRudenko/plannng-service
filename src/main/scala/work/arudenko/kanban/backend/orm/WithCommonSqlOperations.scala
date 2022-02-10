@@ -26,18 +26,12 @@ trait WithCommonSqlOperations[T] extends SQLSyntaxSupport[T] {
       sql.updateAndReturnGeneratedKey.apply()
     }
 
-
-
   protected def getOne(sql:SQL[T,NoExtractor],extractor: WrappedResultSet=>T = sqlExtractor): Option[T] =
     DB readOnly { implicit session =>
       sql.map(rs => extractor(rs)).single.apply()
     }
 
   def sqlExtractor(rs: WrappedResultSet):T
-
-  protected val curSyntax: scalikejdbc.QuerySQLSyntaxProvider[scalikejdbc.SQLSyntaxSupport[T], T] = syntax("m")
-
-  def tbl: scalikejdbc.TableAsAliasSQLSyntax =this.as(curSyntax)
 
   def delete(id:Int): Int = update(sql"delete from $table where id=$id")
 
