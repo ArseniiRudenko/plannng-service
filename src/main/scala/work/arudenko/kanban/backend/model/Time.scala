@@ -62,5 +62,18 @@ object Time extends WithCommonSqlOperations[Time]{
          """)).toOptionLogged
   }
 
+  def updateForUser(userId:Int,taskId:Int,record:Time): Int = {
+    val time=s"${record.time} hours"
+    update(
+      sql"""update $table
+           set
+            comment=${record.description},
+            on_date=${record.date},
+            time=${time},
+            issue=${taskId}
+            where id=${record.id} and person=${userId}""")
+  }
+
+
 }
 

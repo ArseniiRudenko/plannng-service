@@ -93,7 +93,8 @@ create table spent_time
     time       interval                               not null,
     created_at timestamp with time zone default now() not null,
     comment    text,
-    on_date    date                     default now()
+    on_date    date                     default now(),
+    updated_at timestamp with time zone default now() not null
 );
 
 alter table spent_time
@@ -363,6 +364,12 @@ alter function trigger_set_timestamp() owner to postgres;
 create trigger set_timestamp_on_update
     before update
     on issues
+    for each row
+execute procedure trigger_set_timestamp();
+
+create trigger set_timestamp
+    before update
+    on spent_time
     for each row
 execute procedure trigger_set_timestamp();
 
