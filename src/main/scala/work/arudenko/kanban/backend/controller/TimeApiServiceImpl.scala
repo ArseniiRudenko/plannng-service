@@ -3,10 +3,11 @@ package work.arudenko.kanban.backend.controller
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
 import akka.http.scaladsl.server.Directives.authenticateOAuth2
 import akka.http.scaladsl.server.Route
+import com.typesafe.scalalogging.LazyLogging
 import work.arudenko.kanban.backend.api.TimeApiService
 import work.arudenko.kanban.backend.model.{Comment, GeneralError, Time}
 
-object TimeApiServiceImpl extends TimeApiService  with GenericApi[Time] {
+object TimeApiServiceImpl extends TimeApiService  with LazyLogging with AuthenticatedRoute{
   /**
    * Code: 200, Message: successful operation, DataType: Time
    * Code: 400, Message: Invalid message format, DataType: GeneralError

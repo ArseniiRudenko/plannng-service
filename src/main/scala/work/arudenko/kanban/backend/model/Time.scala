@@ -22,9 +22,7 @@ final case class Time(
                        date: LocalDate,
                        time: LocalTime,
                        createdAt: Option[OffsetDateTime]
-)extends WithId[Time] {
-  override def getId: Option[Int] = id
-  override def updateId(newId: Option[Int]): Time = copy(id=newId)
+){
 
   def getTimeAsInterval:PGInterval = {
     new PGInterval(0,0,0,time.getHour,time.getMinute,time.getSecond)
