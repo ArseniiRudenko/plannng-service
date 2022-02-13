@@ -4,18 +4,20 @@ import akka.http.scaladsl.marshalling.ToEntityMarshaller
 import akka.http.scaladsl.unmarshalling.FromEntityUnmarshaller
 import work.arudenko.kanban.backend.api.UserApiMarshaller
 import work.arudenko.kanban.backend.model.{GeneralError, User, UserCreationInfo, UserInfo, UserUpdateInfo}
+import boopickle.Default._
 
-object UserApiMarshallerImpl extends UserApiMarshaller{
 
-  override implicit def fromEntityUnmarshallerUserCreate: FromEntityUnmarshaller[UserCreationInfo] = ???
+object UserApiMarshallerImpl extends UserApiMarshaller with BoopickleMarshaller {
 
-  override implicit def fromEntityUnmarshallerUserUpdate: FromEntityUnmarshaller[UserUpdateInfo] = ???
+  override implicit def fromEntityUnmarshallerUserCreate: FromEntityUnmarshaller[UserCreationInfo] = getUnmarshaller[UserCreationInfo]
 
-  override implicit def fromEntityUnmarshallerUserList: FromEntityUnmarshaller[Seq[UserInfo]] = ???
+  override implicit def fromEntityUnmarshallerUserUpdate: FromEntityUnmarshaller[UserUpdateInfo] = getUnmarshaller[UserUpdateInfo]
 
-  override implicit def toEntityMarshallerUserInfo: ToEntityMarshaller[UserInfo] = ???
+  override implicit def fromEntityUnmarshallerUserList: FromEntityUnmarshaller[Seq[UserInfo]] = getUnmarshaller[Seq[UserInfo]]
 
-  override implicit def toEntityMarshallerUser: ToEntityMarshaller[User] = ???
+  override implicit def toEntityMarshallerUserInfo: ToEntityMarshaller[UserInfo] = getMarshaller[UserInfo]
 
-  override implicit def toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError] = ???
+  override implicit def toEntityMarshallerUser: ToEntityMarshaller[User] = getMarshaller[User]
+
+  override implicit def toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError] = getMarshaller[GeneralError]
 }
