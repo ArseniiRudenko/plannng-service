@@ -5,8 +5,7 @@ import scalikejdbc._
 import work.arudenko.kanban.backend.orm.SqlContext.TryLogged
 import work.arudenko.kanban.backend.orm.WithCommonSqlOperations
 
-import java.time.LocalDate
-import java.time.OffsetDateTime
+import java.time.{LocalDate, LocalTime, OffsetDateTime}
 import scala.collection.immutable
 import scala.util.Try
 
@@ -18,14 +17,19 @@ import scala.util.Try
  * @param createdAt  for example: ''null''
 */
 final case class Time(
-  id: Option[Int],
-  description: String,
-  date: LocalDate,
-  time: Int,
-  createdAt: Option[OffsetDateTime]
+                       id: Option[Int],
+                       description: String,
+                       date: LocalDate,
+                       time: LocalTime,
+                       createdAt: Option[OffsetDateTime]
 )extends WithId[Time] {
   override def getId: Option[Int] = id
   override def updateId(newId: Option[Int]): Time = copy(id=newId)
+
+  def getTimeAsInterval:PGInterval = {
+    new PGInterval(0,0,0,time.getHour,time.getMinute,time.getSecond)
+  }
+
 }
 
 object Time extends WithCommonSqlOperations[Time]{
@@ -34,9 +38,14 @@ object Time extends WithCommonSqlOperations[Time]{
       Some(rs.int("id")),
       rs.string("comment"),
       rs.localDate("on_date"),
-      rs.get[PGInterval]("time").getHours,
+      rs.get[PGInterval]("time"),
       Some(rs.offsetDateTime("created_at"))
     )
+
+  private implicit def intervalToLocalTime(interval:PGInterval):LocalTime = {
+    LocalTime.of(interval.getHours,interval.getMinutes,interval.getWholeSeconds)
+  }
+
 
   override val tableName = "project_track.spent_time"
 
@@ -48,31 +57,28 @@ object Time extends WithCommonSqlOperations[Time]{
     update(sql"delete from $table where id=$recordId and person=$userId")
 
   def add(userId:Int,taskId:Int,record:Time): Option[Long] = {
-    val time=s"${record.time} hours"
     Try(insert(
       sql"""
         insert into $table (issue,person,time,comment,on_date)
         values(
                $taskId,
                $userId,
-               $time,
+               ${record.getTimeAsInterval},
                ${record.description},
                ${record.date}
         )
          """)).toOptionLogged
   }
 
-  def updateForUser(userId:Int,taskId:Int,record:Time): Int = {
-    val time=s"${record.time} hours"
+  def updateForUser(userId:Int,taskId:Int,record:Time): Int =
     update(
       sql"""update $table
            set
             comment=${record.description},
             on_date=${record.date},
-            time=${time},
+            time=${record.getTimeAsInterval},
             issue=${taskId}
             where id=${record.id} and person=${userId}""")
-  }
 
 
 }
