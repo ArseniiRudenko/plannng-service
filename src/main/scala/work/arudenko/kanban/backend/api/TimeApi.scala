@@ -50,12 +50,18 @@ trait TimeApiService {
   def updateTime(taskId: Int, time: Time)
                 (implicit toEntityMarshallerTime: ToEntityMarshaller[Time], toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route
 
-  def addTime200(responseTime: Time)(implicit toEntityMarshallerTime: ToEntityMarshaller[Time]): Route =
+  def timeRecord200(responseTime: Time)(implicit toEntityMarshallerTime: ToEntityMarshaller[Time]): Route =
     complete((200, responseTime))
-  def addTime400(responseGeneralError: GeneralError)(implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route =
+
+  def timeRecordList200(responseTime: Seq[Time])(implicit toEntityMarshallerTime: ToEntityMarshaller[Seq[Time]]): Route =
+    complete((200, responseTime))
+
+  def time400(responseGeneralError: GeneralError)(implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route =
     complete((400, responseGeneralError))
   val time404: Route =
     complete((404, "Task or record not found"))
+  val time200: Route =
+    complete((200, "Success"))
   /**
    * Code: 200, Message: successful operation, DataType: Time
    * Code: 400, Message: Invalid message format, DataType: GeneralError
@@ -64,12 +70,6 @@ trait TimeApiService {
   def addTime(taskId: Int, time: Time)
       (implicit toEntityMarshallerTime: ToEntityMarshaller[Time], toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route
 
-  val timeRecord200: Route =
-    complete((200, "Success"))
-  def deleteTimeRecord400(responseGeneralError: GeneralError)(implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route =
-    complete((400, responseGeneralError))
-  def deleteTimeRecord404: Route =
-    complete((404, "Record not found"))
   /**
    * Code: 200, Message: Success
    * Code: 400, Message: Invalid message format, DataType: GeneralError
@@ -78,12 +78,6 @@ trait TimeApiService {
   def deleteTimeRecord(recordId: Int)
       (implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route
 
-  def getTime200(responseTimearray: Seq[Time])(implicit toEntityMarshallerTimearray: ToEntityMarshaller[Seq[Time]]): Route =
-    complete((200, responseTimearray))
-  def getTime404: Route =
-    complete((404, "Task not found"))
-  def getTime400(responseGeneralError: GeneralError)(implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route =
-    complete((400, responseGeneralError))
   /**
    * Code: 200, Message: successful operation, DataType: Seq[Time]
    * Code: 404, Message: Task not found
@@ -92,12 +86,6 @@ trait TimeApiService {
   def getTime(taskId: Int)
       (implicit toEntityMarshallerTimearray: ToEntityMarshaller[Seq[Time]], toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route
 
-  def getTimeRecordById200(responseTime: Time)(implicit toEntityMarshallerTime: ToEntityMarshaller[Time]): Route =
-    complete((200, responseTime))
-  def getTimeRecordById400(responseGeneralError: GeneralError)(implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route =
-    complete((400, responseGeneralError))
-  def getTimeRecordById404: Route =
-    complete((404, "Record not found"))
   /**
    * Code: 200, Message: successful operation, DataType: Time
    * Code: 400, Message: Invalid message format, DataType: GeneralError

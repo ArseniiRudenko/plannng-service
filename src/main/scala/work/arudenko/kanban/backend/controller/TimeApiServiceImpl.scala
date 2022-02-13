@@ -16,8 +16,8 @@ class TimeApiServiceImpl extends TimeApiService  with GenericApi[Time] {
     authenticateOAuth2("Global",authenticator) {
       auth =>
         Time.add(auth.user.id, taskId, record = time) match {
-          case Some(value) => addTime200(time.copy(id=Some(value.toInt)))
-          case None => addTime400(GeneralError("incorrect value"))
+          case Some(value) => timeRecord200(time.copy(id=Some(value.toInt)))
+          case None => time400(GeneralError("incorrect value"))
         }
     }
   }
@@ -32,13 +32,13 @@ class TimeApiServiceImpl extends TimeApiService  with GenericApi[Time] {
       auth =>
             if(auth.user.admin)
               Time.delete(recordId) match {
-                case 0 => deleteTimeRecord404
-                case _ => timeRecord200
+                case 0 => time404
+                case _ => time200
               }
             else
               Time.deleteForUser(auth.user.id,recordId) match {
-                case 0 => deleteTimeRecord404
-                case _ => timeRecord200
+                case 0 => time404
+                case _ => time200
               }
     }
 
@@ -50,7 +50,7 @@ class TimeApiServiceImpl extends TimeApiService  with GenericApi[Time] {
   override def getTime(taskId: Int)(implicit toEntityMarshallerTimearray: ToEntityMarshaller[Seq[Time]], toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route =
     authenticateOAuth2("Global",authenticator) {
       _ =>
-        getTime200(Time.getByTask(taskId))
+        timeRecordList200(Time.getByTask(taskId))
     }
   /**
    * Code: 200, Message: successful operation, DataType: Time
@@ -61,8 +61,8 @@ class TimeApiServiceImpl extends TimeApiService  with GenericApi[Time] {
     authenticateOAuth2("Global",authenticator) {
       _ =>
         Time.get(recordId) match {
-          case Some(value) => getTimeRecordById200(value)
-          case None => getTimeRecordById404
+          case Some(value) => timeRecord200(value)
+          case None => time404
         }
     }
 
@@ -72,7 +72,7 @@ class TimeApiServiceImpl extends TimeApiService  with GenericApi[Time] {
       auth =>
         Time.updateForUser(auth.user.id,taskId,time) match {
           case 0 => time404
-          case _=> timeRecord200
+          case _=> time200
         }
     }
 

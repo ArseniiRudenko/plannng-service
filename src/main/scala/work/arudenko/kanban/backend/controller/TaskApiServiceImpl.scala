@@ -19,8 +19,8 @@ class TaskApiServiceImpl extends TaskApiService with LazyLogging with Authentica
     authenticateOAuth2("Global",authenticator) {
       auth =>
         Task.addNew(task, auth.user.id) match {
-          case Some(value) => addTask200(task.copy(id=Some(value.toInt)))
-          case None => addTask400(GeneralError("incorrect task parameters"))
+          case Some(value) => taskRecord200(task.copy(id=Some(value.toInt)))
+          case None => task400(GeneralError("incorrect task parameters"))
         }
     }
   /**
@@ -50,7 +50,7 @@ class TaskApiServiceImpl extends TaskApiService with LazyLogging with Authentica
   override def findTaskByStatus(status: String)(implicit toEntityMarshallerTaskarray: ToEntityMarshaller[Seq[Task]], toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route =
     authenticateOAuth2("Global",authenticator) {
       _ =>
-        findTaskByStatus200(Task.getByStatus(status))
+        taskArray200(Task.getByStatus(status))
     }
   /**
    * Code: 200, Message: successful operation, DataType: Seq[Task]
@@ -59,7 +59,7 @@ class TaskApiServiceImpl extends TaskApiService with LazyLogging with Authentica
   override def findTasksByTags(tags: String)(implicit toEntityMarshallerTaskarray: ToEntityMarshaller[Seq[Task]], toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route =
     authenticateOAuth2("Global",authenticator) {
       _ =>
-        findTasksByTags200(Task.getByTagIds(Tag.getTagsByName(tags).map(tag => tag.id.get)))
+        taskArray200(Task.getByTagIds(Tag.getTagsByName(tags).map(tag => tag.id.get)))
     }
   /**
    * Code: 200, Message: successful operation, DataType: Task
@@ -70,7 +70,7 @@ class TaskApiServiceImpl extends TaskApiService with LazyLogging with Authentica
     authenticateOAuth2("Global",authenticator) {
       _ =>
         Task.get(taskId) match {
-          case Some(value) => getTaskById200(value)
+          case Some(value) => taskRecord200(value)
           case None => Task404
         }
     }
@@ -86,13 +86,13 @@ class TaskApiServiceImpl extends TaskApiService with LazyLogging with Authentica
       auth =>
         Task.updateTask(task, auth.user.id) match {
           case Some(value) => value match {
-            case 1 => updateTask200(task)
+            case 1 => taskRecord200(task)
             case 0 => Task404
             case v =>
               logger.error(s" unexpected number of updated tasks $v when updating task $task by user $auth.user")
-              updateTask400(GeneralError("task update gone wrong, contact support"))
+              task400(GeneralError("task update gone wrong, contact support"))
           }
-          case None => updateTask400(GeneralError("incorrect update request"))
+          case None => task400(GeneralError("incorrect update request"))
         }
     }
 

@@ -81,10 +81,17 @@ class TaskApi(
 
 trait TaskApiService {
 
-  def addTask200(responseTask: Task)(implicit toEntityMarshallerTask: ToEntityMarshaller[Task]): Route =
+  def taskRecord200(responseTask: Task)(implicit toEntityMarshallerTask: ToEntityMarshaller[Task]): Route =
     complete((200, responseTask))
-  def addTask400(responseGeneralError: GeneralError)(implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route =
+  def task400(responseGeneralError: GeneralError)(implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route =
     complete((400, responseGeneralError))
+  def taskArray200(responseTaskArray: Seq[Task])(implicit toEntityMarshallerTaskarray: ToEntityMarshaller[Seq[Task]]): Route =
+    complete((200, responseTaskArray))
+  val Task404: Route =
+    complete((404, "Task not found"))
+  val Task200: Route =
+    complete((200, "successful operation"))
+
   /**
    * Code: 200, Message: successful task operation, DataType: Task
    * Code: 400, Message: Invalid message format, DataType: GeneralError
@@ -92,12 +99,6 @@ trait TaskApiService {
   def addTask(task: Task)
       (implicit toEntityMarshallerTask: ToEntityMarshaller[Task], toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route
 
-  def Task200: Route =
-    complete((200, "successful operation"))
-  def deleteTask400(responseGeneralError: GeneralError)(implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route =
-    complete((400, responseGeneralError))
-  def Task404: Route =
-    complete((404, "Task not found"))
   /**
    * Code: 200, Message: successful operation
    * Code: 400, Message: Invalid message format, DataType: GeneralError
@@ -106,10 +107,6 @@ trait TaskApiService {
   def deleteTask(taskId: Int)
       (implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route
 
-  def findTaskByStatus200(responseTaskarray: Seq[Task])(implicit toEntityMarshallerTaskarray: ToEntityMarshaller[Seq[Task]]): Route =
-    complete((200, responseTaskarray))
-  def findTaskByStatus400(responseGeneralError: GeneralError)(implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route =
-    complete((400, responseGeneralError))
   /**
    * Code: 200, Message: successful operation, DataType: Seq[Task]
    * Code: 400, Message: Invalid message format, DataType: GeneralError
@@ -117,21 +114,12 @@ trait TaskApiService {
   def findTaskByStatus(status: String)
       (implicit toEntityMarshallerTaskarray: ToEntityMarshaller[Seq[Task]], toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route
 
-  def findTasksByTags200(responseTaskarray: Seq[Task])(implicit toEntityMarshallerTaskarray: ToEntityMarshaller[Seq[Task]]): Route =
-    complete((200, responseTaskarray))
-  def findTasksByTags400(responseGeneralError: GeneralError)(implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route =
-    complete((400, responseGeneralError))
   /**
    * Code: 200, Message: successful operation, DataType: Seq[Task]
    * Code: 400, Message: Invalid message format, DataType: GeneralError
    */
   def findTasksByTags(tags: String)
       (implicit toEntityMarshallerTaskarray: ToEntityMarshaller[Seq[Task]], toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route
-
-  def getTaskById200(responseTask: Task)(implicit toEntityMarshallerTask: ToEntityMarshaller[Task]): Route =
-    complete((200, responseTask))
-  def getTaskById400(responseGeneralError: GeneralError)(implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route =
-    complete((400, responseGeneralError))
 
   /**
    * Code: 200, Message: successful operation, DataType: Task
@@ -141,10 +129,6 @@ trait TaskApiService {
   def getTaskById(taskId: Int)
       (implicit toEntityMarshallerTask: ToEntityMarshaller[Task], toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route
 
-  def updateTask200(responseTask: Task)(implicit toEntityMarshallerTask: ToEntityMarshaller[Task]): Route =
-    complete((200, responseTask))
-  def updateTask400(responseGeneralError: GeneralError)(implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route =
-    complete((400, responseGeneralError))
   /**
    * Code: 200, Message: successful operation, DataType: Task
    * Code: 404, Message: Task not found
@@ -152,10 +136,6 @@ trait TaskApiService {
    */
   def updateTask(task: Task)
       (implicit toEntityMarshallerTask: ToEntityMarshaller[Task], toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route
-
-  def updateTaskStatus400(responseGeneralError: GeneralError)(implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route =
-    complete((400, responseGeneralError))
-
 
   /**
    * Code: 400, Message: Invalid message format, DataType: GeneralError
@@ -165,8 +145,6 @@ trait TaskApiService {
   def updateTaskStatus(taskId: Int, status: String)
       (implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route
 
-  def uploadFile400(responseGeneralError: GeneralError)(implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route =
-    complete((400, responseGeneralError))
   /**
    * Code: 200, Message: successful operation
    * Code: 400, Message: Invalid message format, DataType: GeneralError

@@ -69,7 +69,6 @@ trait CommentApiService {
   def addComment(taskId: Int, comment: String)
       (implicit toEntityMarshallerComment: ToEntityMarshaller[Comment], toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route
 
-
   /**
    * Code: 200, Message: successful operation
    * Code: 400, Message: Invalid message format, DataType: GeneralError
@@ -80,7 +79,6 @@ trait CommentApiService {
 
   def getComments200(responseCommentarray: Seq[Comment])(implicit toEntityMarshallerCommentarray: ToEntityMarshaller[Seq[Comment]]): Route =
     complete((200, responseCommentarray))
-
 
   /**
    * Code: 200, Message: successful operation, DataType: Seq[Comment]
