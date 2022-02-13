@@ -6,7 +6,7 @@ import akka.http.scaladsl.server.Route
 import work.arudenko.kanban.backend.api.TimeApiService
 import work.arudenko.kanban.backend.model.{Comment, GeneralError, Time}
 
-class TimeApiServiceImpl extends TimeApiService  with GenericApi[Time] {
+object TimeApiServiceImpl extends TimeApiService  with GenericApi[Time] {
   /**
    * Code: 200, Message: successful operation, DataType: Time
    * Code: 400, Message: Invalid message format, DataType: GeneralError

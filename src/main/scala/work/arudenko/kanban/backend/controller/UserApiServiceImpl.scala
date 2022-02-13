@@ -19,7 +19,7 @@ import scala.concurrent.ExecutionContextExecutor
 import scala.concurrent.duration.Duration
 import scala.util.{Failure, Success}
 
-class UserApiServiceImpl(actorSystem: ActorSystem) extends UserApiService with LazyLogging with AuthenticatedRoute {
+class UserApiServiceImpl(implicit actorSystem: ActorSystem) extends UserApiService with LazyLogging with AuthenticatedRoute {
 
   private implicit val dispatcher: ExecutionContextExecutor = actorSystem.dispatcher
 

@@ -10,7 +10,7 @@ import work.arudenko.kanban.backend.model.{GeneralError, Tag, Task}
 
 import java.io.File
 
-class TaskApiServiceImpl extends TaskApiService with LazyLogging with AuthenticatedRoute{
+object TaskApiServiceImpl extends TaskApiService with LazyLogging with AuthenticatedRoute{
   /**
    * Code: 200, Message: successful task operation, DataType: Task
    * Code: 400, Message: Invalid message format, DataType: GeneralError

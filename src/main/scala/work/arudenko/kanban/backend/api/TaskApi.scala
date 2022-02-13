@@ -158,9 +158,7 @@ trait TaskApiService {
 trait TaskApiMarshaller {
   implicit def fromEntityUnmarshallerTask: FromEntityUnmarshaller[Task]
 
-
   implicit def fromStringUnmarshallerFileList: FromStringUnmarshaller[Seq[File]]
-
 
   implicit def toEntityMarshallerTaskarray: ToEntityMarshaller[Seq[Task]]
 

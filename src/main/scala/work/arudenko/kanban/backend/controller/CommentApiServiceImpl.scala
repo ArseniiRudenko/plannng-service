@@ -9,7 +9,7 @@ import work.arudenko.kanban.backend.model.{Comment, GeneralError, UserInfo}
 
 import java.time.OffsetDateTime
 
-class CommentApiServiceImpl extends CommentApiService  with LazyLogging with AuthenticatedRoute{
+object CommentApiServiceImpl extends CommentApiService  with LazyLogging with AuthenticatedRoute{
   /**
    * Code: 200, Message: successful operation, DataType: Comment
    * Code: 400, Message: Invalid message format, DataType: GeneralError
