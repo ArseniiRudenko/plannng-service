@@ -65,6 +65,9 @@ object User extends WithCommonSqlOperations[User]{
 
   override val tableName="project_track.peoples"
 
+
+
+
   override def sqlExtractor(rs: WrappedResultSet): User =
     new User(
       rs.int("id"),
@@ -86,11 +89,22 @@ object User extends WithCommonSqlOperations[User]{
       sql" select id from $table where email=$email ".map(rs=>rs.int("id")).single.apply()
     }
 
+  def emailActivateAccount(userId:Int) = {
+    update(sql" update $table set is_email_verified=true,is_enabled=true where id=$userId")
+  }
+
   def createUsers(users:Seq[UserInfo]) = ???
 
   def createUser(users:UserInfo) = ???
 
-  def signUp(user:UserCreationInfo) = ???
+  def setPassword(userId:Int,password:String)=
+    update(sql" update $table set password=${password} where id=${userId}")
+
+  def signUp(user:UserCreationInfo) = insert(
+    sql"""
+            insert into $table (first_name,last_name,email,password,phone,is_enabled,is_admin) values
+            (${user.firstName},${user.lastName},${user.email},${user.password},${user.phone},false,false)
+       """)
 
   def updateUser(userUpdateInfo: UserUpdateInfo) = ???
 

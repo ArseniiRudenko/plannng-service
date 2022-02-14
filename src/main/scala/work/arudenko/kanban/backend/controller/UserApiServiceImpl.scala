@@ -13,21 +13,47 @@ import com.typesafe.scalalogging.LazyLogging
 import scalikejdbc.TxBoundary.Future
 import work.arudenko.kanban.backend.api.UserApiService
 import work.arudenko.kanban.backend.model.{GeneralError, User, UserCreationInfo, UserInfo, UserUpdateInfo}
+import work.arudenko.kanban.backend.services.EmailService
 
 import java.util.concurrent.TimeUnit
 import scala.concurrent.ExecutionContextExecutor
-import scala.concurrent.duration.Duration
+import scala.concurrent.duration.{Duration, FiniteDuration}
 import scala.util.{Failure, Success}
 
 class UserApiServiceImpl(implicit actorSystem: ActorSystem) extends UserApiService with LazyLogging with AuthenticatedRoute {
 
   private implicit val dispatcher: ExecutionContextExecutor = actorSystem.dispatcher
 
+  val emailVerificationPrefix = "e"
+  val emailVerificationDeadline: FiniteDuration = Duration(3,TimeUnit.DAYS)
+
+  val passwordResetPrefix = "p"
+  val passwordResetDeadline: FiniteDuration = Duration(12,TimeUnit.HOURS)
+
   /**
    * Code: 200, Message: Success
    * Code: 400, Message: Invalid message format, DataType: GeneralError
    */
-  override def createUser(user: UserCreationInfo)(implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route = ???
+  override def createUser(user: UserCreationInfo)(implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route = {
+    val salt:Array[Byte] = generateSalt
+    val passHash = generateArgon2id(user.password,salt).toBase64
+    val userWitPass = user.copy(password = s"$passHash:${salt.toBase64}")
+    val id = User.signUp(userWitPass)
+    val finalUser =
+      new User(
+        id.toInt,
+        userWitPass.firstName,
+        userWitPass.lastName,
+        Some(userWitPass.email),
+        Some(userWitPass.password),
+        userWitPass.phone,
+        false,
+        false
+      )
+    val emailVerificationToken=generateSessionToken(finalUser,emailVerificationDeadline,Some(emailVerificationPrefix))
+    EmailService.sendActivaltionEmail(finalUser,emailVerificationToken)
+    User200
+  }
 
   /**
    * Code: 200, Message: Success
@@ -59,23 +85,25 @@ class UserApiServiceImpl(implicit actorSystem: ActorSystem) extends UserApiServi
         }
     }
 
-  private def fakeCalculatingAndFuckOff(pw: String)(implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route = {
-    Credentials(Some(OAuth2BearerToken(pw)))
-      .asInstanceOf[Credentials.Provided]
-      .verify(null, pw => generateArgon2id(pw, "").toBase64)
-    User400(GeneralError("wrong login or password"))
-  }
-
   import work.arudenko.kanban.backend.orm.RedisContext._
   import com.redis.serialization._
   import com.redis.serialization.Parse.Implicits._
   import boopickle.Default._
 
-  private def generateSessionToken(user: User): String = {
-    val sessionToken = generateSalt.toBase64
+  private def getUserFromToken(id:String):Option[User] = {
+    redis.withClient {
+      client => client.get[User](id)
+    }
+  }
+
+  private def generateSessionToken(user: User, expires:FiniteDuration = authDuration, prefix:Option[String]=None): String = {
+    val sessionToken = prefix match {
+      case Some(value) => s"$value:${generateSalt.toBase64}"
+      case None => generateSalt.toBase64
+    }
     scala.concurrent.Future {
       redis.withClient {
-        client => client.set(sessionToken, user, Always, Duration.create(4, TimeUnit.HOURS))(userSerializer)
+        client => client.set(sessionToken, user, Always, expires)(userSerializer)
       }
     }.onComplete {
       case Failure(exception) => logger.error("failed creating session token", exception)
@@ -91,6 +119,7 @@ class UserApiServiceImpl(implicit actorSystem: ActorSystem) extends UserApiServi
   override def loginUser(username: String, password: String)(implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route =
     User.getLoginUser(username) match {
       case Some(user) =>
+        if(!user.enabled) return User400(GeneralError("user disabled"))
         val creds = Credentials(Some(OAuth2BearerToken(password))).asInstanceOf[Credentials.Provided]
         user.password match {
           case Some(storedPassword) => {
@@ -102,9 +131,9 @@ class UserApiServiceImpl(implicit actorSystem: ActorSystem) extends UserApiServi
               User400(GeneralError("wrong login or password"))
             }
           }
-          case None => fakeCalculatingAndFuckOff(password)
+          case None => User400(GeneralError("user disabled"))
         }
-      case None => fakeCalculatingAndFuckOff(password)
+      case None => User400(GeneralError("wrong login or password"))
     }
 
   /**
@@ -146,4 +175,17 @@ class UserApiServiceImpl(implicit actorSystem: ActorSystem) extends UserApiServi
   override def updateUser(user: UserUpdateInfo)(implicit toEntityMarshallerUser: ToEntityMarshaller[User], toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route = ???
 
   override def resetPassword(resetToken: String, newPassword: String)(implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route = ???
+
+  override def activateAccount(emailToken: String)(implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route = {
+    getUserFromToken(emailToken) match {
+      case Some(value) => User.emailActivateAccount(value.id) match {
+        case 1 => User200
+        case 0 => User404
+        case e => logger.error(s"returned number of records $e when trying to activate user $value by email token $emailToken");User500
+      }
+      case None => User404
+    }
+  }
+
+  override def requestPasswordReset(email: String)(implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route = ???
 }

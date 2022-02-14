@@ -60,8 +60,16 @@ class UserApi(
           entity(as[String]) { newPassword =>
             userService.resetPassword(resetToken, newPassword)
           }
+      } ~
+      put{
+        userService.requestPasswordReset(resetToken)
       }
     } ~
+    path("user" / "login"/ "activate"/ Segment) { emailToken =>
+      post {
+        userService.activateAccount(emailToken)
+      }
+    }~
     path("user" / "logout") { 
       get {  
             userService.logoutUser()
@@ -84,6 +92,8 @@ trait UserApiService {
     complete((200, "Success"))
   val User404: Route =
     complete((404, "User not found"))
+  val User500: Route =
+    complete((500, "unexpected db answer"))
   val User403: Route =
     complete((403, "Current user is not authorized to do that"))
 
@@ -133,8 +143,14 @@ trait UserApiService {
   def logoutUser()
       (implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route
 
+  def requestPasswordReset(email:String)
+    (implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route
+
 
   def resetPassword(resetToken: String,newPassword:String)
+                   (implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route
+
+  def activateAccount(emailToken: String)
                    (implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route
 
   /**

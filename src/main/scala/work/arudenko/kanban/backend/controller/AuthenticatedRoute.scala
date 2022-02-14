@@ -7,11 +7,10 @@ import boopickle.Default.Pickle
 import com.redis.api.StringApi.Always
 import com.typesafe.config.{Config, ConfigFactory}
 import work.arudenko.kanban.backend.model.User
-
 import java.nio.ByteBuffer
 import java.util.concurrent.TimeUnit
 import scala.concurrent.ExecutionContextExecutor
-import scala.concurrent.duration.Duration
+import scala.concurrent.duration.{Duration, FiniteDuration}
 
 
 case class ValidAuth(token:String,user:User)
@@ -32,8 +31,10 @@ trait AuthenticatedRoute {
   private val memLimit: Int = conf.getInt("hash.memLimit")
   private val outputLength: Int = conf.getInt("hash.outputLength")
   private val parallelism: Int = conf.getInt("hash.parallelism")
+  val authDuration: FiniteDuration = Duration.create(4, TimeUnit.HOURS)
 
-  private def generateArgon2id(password: String, salt: Array[Byte]): Array[Byte] = {
+
+  protected def generateArgon2id(password: String, salt: Array[Byte]): Array[Byte] = {
 
     val builder = new Argon2Parameters
     .Builder(Argon2Parameters.ARGON2_id)
@@ -67,12 +68,14 @@ trait AuthenticatedRoute {
   protected implicit val userParser: Parse[User] = Parse(arr=>Unpickle[User].fromBytes(ByteBuffer.wrap(arr))(unpickleState))
   protected implicit val userSerializer:Format = Format({case u:User => Pickle.intoBytes(u)(pickleState,implicitly[Pickler[User]]).array()})
 
-
   val authenticator:Authenticator[ValidAuth] = {
     case Credentials.Missing => None
     case p:Credentials.Provided =>
       redis.withClient {
-        client => client.get[User](p.identifier).map(u=>ValidAuth(p.identifier,u))
+        client => client.get[User](p.identifier).map(u=>{
+          client.expire(p.identifier,authDuration.toSeconds.toInt)
+          ValidAuth(p.identifier,u)
+        })
       }
   }
 
