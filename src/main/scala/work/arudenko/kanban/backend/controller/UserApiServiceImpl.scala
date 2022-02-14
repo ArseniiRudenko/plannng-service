@@ -1,16 +1,13 @@
 package work.arudenko.kanban.backend.controller
 
 import akka.actor.ActorSystem
-import akka.http.javadsl.server.directives.SecurityDirectives.ProvidedCredentials
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
 import akka.http.scaladsl.model.headers.OAuth2BearerToken
 import akka.http.scaladsl.server.Directives.authenticateOAuth2
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.directives.Credentials
 import com.redis.api.StringApi.Always
-import com.typesafe.config.{Config, ConfigFactory}
 import com.typesafe.scalalogging.LazyLogging
-import scalikejdbc.TxBoundary.Future
 import work.arudenko.kanban.backend.api.UserApiService
 import work.arudenko.kanban.backend.model.{GeneralError, User, UserCreationInfo, UserInfo, UserUpdateInfo}
 import work.arudenko.kanban.backend.services.EmailService
@@ -38,20 +35,30 @@ class UserApiServiceImpl(implicit actorSystem: ActorSystem) extends UserApiServi
     val passHash = generateArgon2id(user.password,salt).toBase64
     val userWitPass = user.copy(password = s"$passHash:${salt.toBase64}")
     val id = User.signUp(userWitPass)
-    val finalUser =
-      new User(
-        id.toInt,
-        userWitPass.firstName,
-        userWitPass.lastName,
-        Some(userWitPass.email),
-        Some(userWitPass.password),
-        userWitPass.phone,
-        false,
-        false
-      )
-    val emailVerificationToken=generateSessionToken(finalUser,emailVerificationDeadline,Some(emailVerificationPrefix))
-    EmailService.sendActivaltionEmail(finalUser,emailVerificationToken)
-    User200
+    id match {
+      case Some(value) => scala.concurrent.Future {
+        val finalUser =
+          new User(
+            value.toInt,
+            userWitPass.firstName,
+            userWitPass.lastName,
+            Some(userWitPass.email),
+            Some(userWitPass.password),
+            userWitPass.phone,
+            false,
+            false
+          )
+        val emailVerificationToken=generateSessionToken(finalUser,emailVerificationDeadline,Some(emailVerificationPrefix))
+        EmailService.sendActivaltionEmail(finalUser,emailVerificationToken)
+      }.onComplete {
+        case Failure(exception) => logger.error("failed sending sugn up email", exception)
+        case Success(value) => logger.trace(s"success sending sign up email")
+      }
+      User200
+      case None => User200
+    }
+
+
   }
 
   /**
@@ -199,7 +206,7 @@ class UserApiServiceImpl(implicit actorSystem: ActorSystem) extends UserApiServi
           case Failure(exception) => logger.error("failed sending password reset", exception)
           case Success(value) => logger.trace(s"successfully sent password reset email")
         }
-      User200
+        User200
       case None => User200
     }
 }

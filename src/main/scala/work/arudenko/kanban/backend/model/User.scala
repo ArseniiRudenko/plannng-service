@@ -2,7 +2,10 @@ package work.arudenko.kanban.backend.model
 
 import scalikejdbc._
 import work.arudenko.kanban.backend.model.Comment.syntax
+import work.arudenko.kanban.backend.orm.SqlContext.TryLogged
 import work.arudenko.kanban.backend.orm.WithCommonSqlOperations
+
+import scala.util.Try
 
 /**
  * @param id  for example: ''null''
@@ -100,11 +103,12 @@ object User extends WithCommonSqlOperations[User]{
   def setPassword(userId:Int,password:String)=
     update(sql" update $table set password=${password} where id=${userId}")
 
-  def signUp(user:UserCreationInfo) = insert(
+  def signUp(user:UserCreationInfo) = Try(
+    insert(
     sql"""
             insert into $table (first_name,last_name,email,password,phone,is_enabled,is_admin) values
             (${user.firstName},${user.lastName},${user.email},${user.password},${user.phone},false,false)
-       """)
+       """)).toOptionLogged
 
   def updateUser(userUpdateInfo: UserUpdateInfo) = ???
 
