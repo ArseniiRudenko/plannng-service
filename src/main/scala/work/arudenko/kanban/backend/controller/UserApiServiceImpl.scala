@@ -14,7 +14,6 @@ import scalikejdbc.TxBoundary.Future
 import work.arudenko.kanban.backend.api.UserApiService
 import work.arudenko.kanban.backend.model.{GeneralError, User, UserCreationInfo, UserInfo, UserUpdateInfo}
 import work.arudenko.kanban.backend.services.EmailService
-
 import java.util.concurrent.TimeUnit
 import scala.concurrent.ExecutionContextExecutor
 import scala.concurrent.duration.{Duration, FiniteDuration}
@@ -90,9 +89,13 @@ class UserApiServiceImpl(implicit actorSystem: ActorSystem) extends UserApiServi
   import com.redis.serialization.Parse.Implicits._
   import boopickle.Default._
 
-  private def getUserFromToken(id:String):Option[User] = {
+  private def getUserFromToken(id:String,oneTime:Boolean=true):Option[User] = {
     redis.withClient {
-      client => client.get[User](id)
+      client =>{
+        val result = client.get[User](id)
+        if(oneTime) result.foreach(_=>client.del(id))
+        result
+      }
     }
   }
 
@@ -187,5 +190,16 @@ class UserApiServiceImpl(implicit actorSystem: ActorSystem) extends UserApiServi
     }
   }
 
-  override def requestPasswordReset(email: String)(implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route = ???
+  override def requestPasswordReset(email: String)(implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route =
+    User.getLoginUser(email) match {
+        case Some(value) =>scala.concurrent.Future {
+          val pwResetToken = generateSessionToken(value,passwordResetDeadline,Some(passwordResetPrefix))
+          EmailService.sendPasswordResetEmail(value,pwResetToken)
+        }.onComplete {
+          case Failure(exception) => logger.error("failed sending password reset", exception)
+          case Success(value) => logger.trace(s"successfully sent password reset email")
+        }
+      User200
+      case None => User200
+    }
 }
