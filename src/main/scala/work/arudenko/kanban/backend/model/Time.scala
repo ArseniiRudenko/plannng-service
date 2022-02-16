@@ -65,7 +65,7 @@ object Time extends WithCommonSqlOperations[Time]{
                ${record.description},
                ${record.date}
         )
-         """)).toOptionLogged
+         """)).toOptionLogErr
   }
 
   def updateForUser(userId:Int,taskId:Int,record:Time): Int =

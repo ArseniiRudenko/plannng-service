@@ -90,7 +90,7 @@ object Task extends WithCommonSqlOperations[Task] {
         }):_*)
         .apply()
       id
-    }).toOptionLogged
+    }).toOptionLogErr
 
 
   //TODO: allow updating header and description only by creator or admin
@@ -110,7 +110,7 @@ object Task extends WithCommonSqlOperations[Task] {
              cur_status=${task.status.getOrElse("backlog")}::project_track.status,
              updated_by=${updatedBy}
         where id=$id
-         """)).toOptionLogged
+         """)).toOptionLogErr
     )
   }
 

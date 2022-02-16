@@ -1,10 +1,10 @@
 package work.arudenko.kanban.backend.model
 
 import scalikejdbc._
-import work.arudenko.kanban.backend.model.Comment.syntax
 import work.arudenko.kanban.backend.orm.SqlContext.TryLogged
 import work.arudenko.kanban.backend.orm.WithCommonSqlOperations
 
+import scala.collection.immutable
 import scala.util.Try
 
 /**
@@ -69,8 +69,6 @@ object User extends WithCommonSqlOperations[User]{
   override val tableName="project_track.peoples"
 
 
-
-
   override def sqlExtractor(rs: WrappedResultSet): User =
     new User(
       rs.int("id"),
@@ -92,24 +90,27 @@ object User extends WithCommonSqlOperations[User]{
       sql" select id from $table where email=$email ".map(rs=>rs.int("id")).single.apply()
     }
 
-  def emailActivateAccount(userId:Int) = {
+  def emailActivateAccount(userId:Int): Int = {
     update(sql" update $table set is_email_verified=true,is_enabled=true where id=$userId")
   }
 
-  def createUsers(users:Seq[UserInfo]) = ???
+  def createUsers(users:Seq[UserInfo]): Option[IndexedSeq[Long]] =Try( DB localTx{
+    implicit session=>
+      sql"insert into $table (first_name,last_name,email,phone,is_enabled,is_admin) values(?,?,?,?,?,?)"
+        .batchAndReturnGeneratedKey(users.map(u=>u.productIterator.toSeq)).apply()
+  }).toOptionLogInfo
 
-  def createUser(users:UserInfo) = ???
 
-  def setPassword(userId:Int,password:String)=
-    update(sql" update $table set password=${password} where id=${userId}")
+  def setPassword(userId:Int,password:String): Int =
+    update(sql" update $table set password=$password where id=$userId")
 
-  def signUp(user:UserCreationInfo) = Try(
+  def signUp(user:UserCreationInfo): Option[Long] = Try(
     insert(
     sql"""
             insert into $table (first_name,last_name,email,password,phone,is_enabled,is_admin) values
             (${user.firstName},${user.lastName},${user.email},${user.password},${user.phone},false,false)
-       """)).toOptionLogged
+       """)).toOptionLogInfo
 
-  def updateUser(userUpdateInfo: UserUpdateInfo) = ???
+  def updateUser(userUpdateInfo: UserUpdateInfo):Option[Int] = ???
 
 }

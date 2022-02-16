@@ -37,7 +37,7 @@ object Tag extends WithCommonSqlOperations[Tag]{
     getList(sql"select * from $table where name ~ $strMatch")
 
   def createTag(tag: Tag):Option[Long] =
-    Try(insert(sql"insert into $table (name,description) values (${tag.name},${tag.description})")).toOptionLogged
+    Try(insert(sql"insert into $table (name,description) values (${tag.name},${tag.description})")).toOptionLogErr
 
 }
 

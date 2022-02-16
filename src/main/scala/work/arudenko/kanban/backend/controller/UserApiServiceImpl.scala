@@ -31,9 +31,7 @@ class UserApiServiceImpl(implicit actorSystem: ActorSystem) extends UserApiServi
    * Code: 400, Message: Invalid message format, DataType: GeneralError
    */
   override def createUser(user: UserCreationInfo)(implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route = {
-    val salt:Array[Byte] = generateSalt
-    val passHash = generateArgon2id(user.password,salt).toBase64
-    val userWitPass = user.copy(password = s"$passHash:${salt.toBase64}")
+    val userWitPass: UserCreationInfo = HashPassword(user)
     val id = User.signUp(userWitPass)
     id match {
       case Some(value) => scala.concurrent.Future {
@@ -51,14 +49,21 @@ class UserApiServiceImpl(implicit actorSystem: ActorSystem) extends UserApiServi
         val emailVerificationToken=generateSessionToken(finalUser,emailVerificationDeadline,Some(emailVerificationPrefix))
         EmailService.sendActivaltionEmail(finalUser,emailVerificationToken)
       }.onComplete {
-        case Failure(exception) => logger.error("failed sending sugn up email", exception)
+        case Failure(exception) => logger.error("failed sending sign up email", exception)
         case Success(value) => logger.trace(s"success sending sign up email")
       }
       User200
-      case None => User200
+      case None => User400(GeneralError("failed creating user,info is wrong or user already exists"))
     }
 
 
+  }
+
+  private def HashPassword(user: UserCreationInfo): UserCreationInfo = {
+    val salt: Array[Byte] = generateSalt
+    val passHash = generateArgon2id(user.password, salt).toBase64
+    val userWitPass = user.copy(password = s"$passHash:${salt.toBase64}")
+    userWitPass
   }
 
   /**
@@ -173,7 +178,13 @@ class UserApiServiceImpl(implicit actorSystem: ActorSystem) extends UserApiServi
     authenticateOAuth2("Global", authenticator) {
       auth =>
         if(auth.user.admin)
-          ???
+          User.createUsers(user) match {
+            case Some(value) => value match {
+              case v if v.length == user.length => User200
+              case v => User400(new GeneralError(s"created $v users out of ${user.length}"))
+            }
+            case None => User400(new GeneralError(s"failed creating users"))
+          }
         else
           User403
     }
@@ -182,9 +193,19 @@ class UserApiServiceImpl(implicit actorSystem: ActorSystem) extends UserApiServi
    * Code: 400, Message: Invalid message format, DataType: GeneralError
    * Code: 404, Message: User not found
    */
-  override def updateUser(user: UserUpdateInfo)(implicit toEntityMarshallerUser: ToEntityMarshaller[User], toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route = ???
+  override def updateUser(user: UserUpdateInfo)(implicit toEntityMarshallerUser: ToEntityMarshaller[User], toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route =
+    authenticateOAuth2("Global", authenticator) {
+      auth =>
+        if(auth.user.admin) {
+          ???
+        }else if(???) {
+          ???
+        }else
+          User403
+    }
 
   override def resetPassword(resetToken: String, newPassword: String)(implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route = ???
+
 
   override def activateAccount(emailToken: String)(implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route = {
     getUserFromToken(emailToken) match {
@@ -197,16 +218,18 @@ class UserApiServiceImpl(implicit actorSystem: ActorSystem) extends UserApiServi
     }
   }
 
-  override def requestPasswordReset(email: String)(implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route =
-    User.getLoginUser(email) match {
-        case Some(value) =>scala.concurrent.Future {
-          val pwResetToken = generateSessionToken(value,passwordResetDeadline,Some(passwordResetPrefix))
-          EmailService.sendPasswordResetEmail(value,pwResetToken)
-        }.onComplete {
-          case Failure(exception) => logger.error("failed sending password reset", exception)
-          case Success(value) => logger.trace(s"successfully sent password reset email")
-        }
-        User200
-      case None => User200
+  override def requestPasswordReset(email: String)(implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route = {
+    scala.concurrent.Future {
+      User.getLoginUser(email) match {
+        case Some(value) =>
+          val pwResetToken = generateSessionToken(value, passwordResetDeadline, Some(passwordResetPrefix))
+          EmailService.sendPasswordResetEmail(value, pwResetToken)
+        case None => logger.info(s"requested reset for non existing email $email")
+      }
+    }.onComplete {
+      case Failure(exception) => logger.error("failed sending password reset", exception)
+      case Success(_) => logger.trace(s"successfully sent password reset email")
     }
+    User200
+  }
 }

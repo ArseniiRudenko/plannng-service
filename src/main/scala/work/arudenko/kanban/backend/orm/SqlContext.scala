@@ -20,8 +20,21 @@ object SqlContext  extends LazyLogging{
   ConnectionPool.singleton(conf.getString("jdbc.url"), conf.getString("jdbc.user"), conf.getString("jdbc.password"))
 
   implicit class TryLogged[T](val param:Try[T]) extends AnyVal {
-    def toOptionLogged:Option[T] = param match {
+    def toOptionLogErr:Option[T] = param match {
       case Failure(exception) => logger.error("exception processing db call",exception);None
+      case Success(value) => Some(value)
+    }
+    def toOptionLogWarn:Option[T] = param match {
+      case Failure(exception) => logger.warn("exception processing db call",exception);None
+      case Success(value) => Some(value)
+    }
+    def toOptionLogTrace:Option[T] = param match {
+      case Failure(exception) => logger.trace("exception processing db call",exception);None
+      case Success(value) => Some(value)
+    }
+
+    def toOptionLogInfo:Option[T] = param match {
+      case Failure(exception) => logger.info("exception processing db call",exception);None
       case Success(value) => Some(value)
     }
   }
