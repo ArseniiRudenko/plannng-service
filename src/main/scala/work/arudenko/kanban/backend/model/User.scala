@@ -111,6 +111,20 @@ object User extends WithCommonSqlOperations[User]{
             (${user.firstName},${user.lastName},${user.email},${user.password},${user.phone},false,false)
        """)).toOptionLogInfo
 
-  def updateUser(userUpdateInfo: UserUpdateInfo):Option[Int] = ???
+
+
+  def updateUser(user:User,userUpdateInfo: UserUpdateInfo):Option[Int] =
+   Try(
+     update(
+      sql"""
+           update $table
+           set
+           first_name=${userUpdateInfo.firstName.getOrElse(user.firstName)},
+           last_name=${userUpdateInfo.lastName.orElse(user.lastName)},
+           password=${userUpdateInfo.newPassword.orElse(user.password)},
+           phone=${userUpdateInfo.phone.orElse(user.phone)}
+           where id=${user.id}""")
+   ).toOptionLogInfo
+
 
 }

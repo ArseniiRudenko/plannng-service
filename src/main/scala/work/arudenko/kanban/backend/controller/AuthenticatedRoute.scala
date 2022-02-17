@@ -1,5 +1,6 @@
 package work.arudenko.kanban.backend.controller
 
+import akka.http.scaladsl.model.headers.OAuth2BearerToken
 import akka.http.scaladsl.server.Directives.{Authenticator, AuthenticatorPF}
 import akka.http.scaladsl.server.directives.Credentials
 import boopickle.{DecoderSpeed, Default, EncoderSpeed}
@@ -7,6 +8,7 @@ import boopickle.Default.Pickle
 import com.redis.api.StringApi.Always
 import com.typesafe.config.{Config, ConfigFactory}
 import work.arudenko.kanban.backend.model.User
+
 import java.nio.ByteBuffer
 import java.util.concurrent.TimeUnit
 import scala.concurrent.ExecutionContextExecutor
@@ -79,6 +81,10 @@ trait AuthenticatedRoute {
       }
   }
 
-
+  protected def verifyPassword(password:String,storedPassword:String):Boolean = {
+    val creds = Credentials(Some(OAuth2BearerToken(password))).asInstanceOf[Credentials.Provided]
+    val (secret, salt) = storedPassword.splitAt(storedPassword.lastIndexOf(":"))
+    creds.verify(secret, curPw => generateArgon2id(curPw, salt).toBase64)
+  }
 
 }

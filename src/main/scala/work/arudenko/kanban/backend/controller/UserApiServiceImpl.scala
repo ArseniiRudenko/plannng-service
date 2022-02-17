@@ -31,7 +31,7 @@ class UserApiServiceImpl(implicit actorSystem: ActorSystem) extends UserApiServi
    * Code: 400, Message: Invalid message format, DataType: GeneralError
    */
   override def createUser(user: UserCreationInfo)(implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route = {
-    val userWitPass: UserCreationInfo = HashPassword(user)
+    val userWitPass: UserCreationInfo = user.copy(password = hashPassword(user.password))
     val id = User.signUp(userWitPass)
     id match {
       case Some(value) => scala.concurrent.Future {
@@ -55,15 +55,12 @@ class UserApiServiceImpl(implicit actorSystem: ActorSystem) extends UserApiServi
       User200
       case None => User400(GeneralError("failed creating user,info is wrong or user already exists"))
     }
-
-
   }
 
-  private def HashPassword(user: UserCreationInfo): UserCreationInfo = {
+  private def hashPassword(plaintextPassword: String): String = {
     val salt: Array[Byte] = generateSalt
-    val passHash = generateArgon2id(user.password, salt).toBase64
-    val userWitPass = user.copy(password = s"$passHash:${salt.toBase64}")
-    userWitPass
+    val passHash = generateArgon2id(plaintextPassword, salt).toBase64
+     s"$passHash:${salt.toBase64}"
   }
 
   /**
@@ -135,12 +132,9 @@ class UserApiServiceImpl(implicit actorSystem: ActorSystem) extends UserApiServi
     User.getLoginUser(username) match {
       case Some(user) =>
         if(!user.enabled) return User400(GeneralError("user disabled"))
-        val creds = Credentials(Some(OAuth2BearerToken(password))).asInstanceOf[Credentials.Provided]
         user.password match {
           case Some(storedPassword) => {
-            val (secret, salt) = storedPassword.splitAt(storedPassword.lastIndexOf(":"))
-            val result = creds.verify(secret, curPw => generateArgon2id(curPw, salt).toBase64)
-            if (result) {
+            if (verifyPassword(password, storedPassword)) {
               loginUser200(generateSessionToken(user))
             } else {
               User400(GeneralError("wrong login or password"))
@@ -196,15 +190,43 @@ class UserApiServiceImpl(implicit actorSystem: ActorSystem) extends UserApiServi
   override def updateUser(user: UserUpdateInfo)(implicit toEntityMarshallerUser: ToEntityMarshaller[User], toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route =
     authenticateOAuth2("Global", authenticator) {
       auth =>
+        val userWithPreparedValues = user.copy(newPassword = user.newPassword.map(hashPassword))
         if(auth.user.admin) {
-          ???
-        }else if(???) {
-          ???
+          User.getUser(user.email) match {
+            case Some(oldUserValues) =>
+              processUserUpdate(oldUserValues,userWithPreparedValues)
+            case None => User404
+          }
+        }else if(auth.user.email.contains(user.email) && verifyPassword(user.password,auth.user.password.get)) {
+          processUserUpdate(auth.user, userWithPreparedValues)
         }else
           User403
     }
 
-  override def resetPassword(resetToken: String, newPassword: String)(implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route = ???
+  def processUserUpdate(oldSet:User,newSet:UserUpdateInfo)(implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]):Route =
+    User.updateUser(oldSet,newSet) match {
+      case Some(value) => value match {
+        case 1=> User200
+        case 0=> User404
+        case e=>
+          logger.error(s"update user returned unexpected value $e from update operation for user $oldSet and update set of $newSet")
+          User500
+      }
+      case None => User400(new GeneralError("incorrect values set for update"))
+    }
+
+  override def resetPassword(resetToken: String, newPassword: String)(implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route =
+    getUserFromToken(resetToken) match {
+      case Some(value) =>
+        val hash = hashPassword(newPassword)
+        User.setPassword(value.id, hash) match {
+          case 1 => User200
+          case e =>
+            logger.error(s"reset password returned unexpected value $e from update operation for user $value and hash value of $hash")
+            User500
+        }
+      case None => User404
+    }
 
 
   override def activateAccount(emailToken: String)(implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route = {
