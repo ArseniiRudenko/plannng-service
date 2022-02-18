@@ -8,7 +8,6 @@ import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.directives.Credentials
 import com.redis.api.StringApi.Always
 import com.typesafe.scalalogging.LazyLogging
-import work.arudenko.kanban.backend.api.UserApiService
 import work.arudenko.kanban.backend.model.{GeneralError, User, UserCreationInfo, UserInfo, UserUpdateInfo}
 import work.arudenko.kanban.backend.services.EmailService
 import java.util.concurrent.TimeUnit

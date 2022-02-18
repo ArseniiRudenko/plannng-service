@@ -5,7 +5,6 @@ import akka.http.scaladsl.server.Directives.authenticateOAuth2
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.directives.FileInfo
 import com.typesafe.scalalogging.LazyLogging
-import work.arudenko.kanban.backend.api.TaskApiService
 import work.arudenko.kanban.backend.model.{GeneralError, Tag, Task}
 
 import java.io.File

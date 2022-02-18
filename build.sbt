@@ -15,6 +15,7 @@ libraryDependencies ++= Seq(
   "org.bouncycastle" % "bcprov-jdk15on" % "1.70",
   "net.debasishg" %% "redisclient" % "3.42",
   "io.suzaku" %% "boopickle" % "1.4.0",
+  "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.13.1",
   "org.scalactic" %% "scalactic" % "3.2.10"% "test",
   "org.scalatest" %% "scalatest" % "3.2.10" % "test"
 )

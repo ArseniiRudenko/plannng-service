@@ -4,7 +4,6 @@ import akka.http.scaladsl.marshalling.ToEntityMarshaller
 import akka.http.scaladsl.server.Directives.authenticateOAuth2
 import akka.http.scaladsl.server.Route
 import com.typesafe.scalalogging.LazyLogging
-import work.arudenko.kanban.backend.api.CommentApiService
 import work.arudenko.kanban.backend.model.{Comment, GeneralError, UserInfo}
 
 import java.time.OffsetDateTime

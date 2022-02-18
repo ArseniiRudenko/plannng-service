@@ -1,19 +1,11 @@
-package work.arudenko.kanban.backend.serialization
+package work.arudenko.kanban.backend.serialization.binary
 
-import akka.http.scaladsl.unmarshalling._
-import PredefinedFromEntityUnmarshallers._
-import akka.http.scaladsl.marshalling._
-import PredefinedToEntityMarshallers._
-import akka.http.scaladsl.model.{HttpEntity, RequestEntity}
-import akka.util.ByteString
-import boopickle.{DecoderSpeed, Default, EncoderSpeed}
-import work.arudenko.kanban.backend.api._
+import akka.http.scaladsl.marshalling.ToEntityMarshaller
+import akka.http.scaladsl.unmarshalling.FromEntityUnmarshaller
 import work.arudenko.kanban.backend.model.{Comment, GeneralError}
-import boopickle.Default._
-import java.nio.ByteBuffer
 
 object CommentApiMarshallerImpl extends CommentApiMarshaller with BoopickleMarshaller {
-
+  import boopickle.Default._
 
   override implicit def fromEntityUnmarshallerComment: FromEntityUnmarshaller[Comment] =
     getUnmarshaller[Comment]

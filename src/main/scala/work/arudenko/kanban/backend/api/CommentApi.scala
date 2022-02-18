@@ -101,8 +101,6 @@ trait CommentApiService {
 trait CommentApiMarshaller {
   implicit def fromEntityUnmarshallerComment: FromEntityUnmarshaller[Comment]
 
-
-
   implicit def toEntityMarshallerComment: ToEntityMarshaller[Comment]
 
   implicit def toEntityMarshallerCommentarray: ToEntityMarshaller[Seq[Comment]]
