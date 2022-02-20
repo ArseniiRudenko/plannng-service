@@ -2,7 +2,8 @@ package work.arudenko.kanban.backend.serialization.shitty
 
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
 import akka.http.scaladsl.unmarshalling.FromEntityUnmarshaller
-import work.arudenko.kanban.backend.model.{GeneralError, Task}
+import work.arudenko.kanban.backend.api.TaskApiMarshaller
+import work.arudenko.kanban.backend.model.{GeneralResult, Task}
 
 object TaskApiMarshallerImpl extends TaskApiMarshaller with JacksonMarshaller {
 
@@ -12,5 +13,5 @@ object TaskApiMarshallerImpl extends TaskApiMarshaller with JacksonMarshaller {
 
   override implicit def toEntityMarshallerTask: ToEntityMarshaller[Task] = getMarshaller[Task]
 
-  override implicit def toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError] = getMarshaller[GeneralError]
+  override implicit def toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralResult] = getMarshaller[GeneralResult]
 }

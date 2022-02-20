@@ -2,7 +2,8 @@ package work.arudenko.kanban.backend.serialization.binary
 
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
 import akka.http.scaladsl.unmarshalling.FromEntityUnmarshaller
-import work.arudenko.kanban.backend.model.{GeneralError, Time}
+import work.arudenko.kanban.backend.api.TimeApiMarshaller
+import work.arudenko.kanban.backend.model.{GeneralResult, Time}
 
 object TimeApiMarshallerImpl extends TimeApiMarshaller with BoopickleMarshaller {
 
@@ -14,5 +15,5 @@ object TimeApiMarshallerImpl extends TimeApiMarshaller with BoopickleMarshaller 
 
   override implicit def toEntityMarshallerTimearray: ToEntityMarshaller[Seq[Time]] = getMarshaller[Seq[Time]]
 
-  override implicit def toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError] = getMarshaller[GeneralError]
+  override implicit def toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralResult] = getMarshaller[GeneralResult]
 }

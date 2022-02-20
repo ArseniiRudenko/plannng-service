@@ -6,40 +6,49 @@ import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
 import akka.http.scaladsl.unmarshalling.FromEntityUnmarshaller
 import akka.http.scaladsl.unmarshalling.FromStringUnmarshaller
-import work.arudenko.kanban.backend.model.{Comment, GeneralError}
+import work.arudenko.kanban.backend.model.{Comment, GeneralResult, Result}
 import work.arudenko.kanban.backend.AkkaHttpHelper._
-import work.arudenko.kanban.backend.model.GeneralError
+import work.arudenko.kanban.backend.controller.Auth
 
 
 class CommentApi(
     commentService: CommentApiService,
     commentMarshaller: CommentApiMarshaller
-) {
+)extends GenericApi  {
 
   
   import commentMarshaller._
 
   lazy val route: Route =
-    path("task" / IntNumber / "comment") { (taskId) => 
-      post {  
-            entity(as[String]){ comment =>
+    path("task" / IntNumber / "comment") { (taskId) =>
+      authenticateOAuth2("Global", authenticator) {
+        implicit auth =>
+          post {
+            entity(as[String]) { comment =>
               commentService.addComment(taskId = taskId, comment = comment)
             }
-      }~
-      get {
-          commentService.getComments(taskId = taskId)
+          } ~
+            get {
+              commentService.getComments(taskId = taskId)
+            }
       }
     } ~
-    path("comment" / IntNumber) { (commentId) => 
-      delete {  
+    path("comment" / IntNumber) { (commentId) =>
+      authenticateOAuth2("Global", authenticator) {
+        implicit auth =>
+          delete {
             commentService.deleteComment(commentId = commentId)
+          }
       }
     } ~
-    path("comment") { 
-      put {  
-            entity(as[Comment]){ comment =>
+    path("comment") {
+      authenticateOAuth2("Global", authenticator) {
+        implicit auth =>
+          put {
+            entity(as[Comment]) { comment =>
               commentService.updateComment(comment = comment)
             }
+          }
       }
     }
 }
@@ -47,54 +56,33 @@ class CommentApi(
 
 trait CommentApiService {
 
-  def Comment200(responseComment: Comment)(implicit toEntityMarshallerComment: ToEntityMarshaller[Comment]): Route =
-    complete((200, responseComment))
-
-  val Comment200: Route =
-    complete((200, "Success"))
-  val Comment404: Route =
-    complete((404, "Task not found"))
-  val Comment403: Route =
-    complete((403, "Current user is not authorized to do that"))
-
-
-  def Comment400(responseGeneralError: GeneralError)(implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route =
-    complete((400, responseGeneralError))
-
   /**
    * Code: 200, Message: successful operation, DataType: Comment
    * Code: 400, Message: Invalid message format, DataType: GeneralError
    * Code: 404, Message: Task not found
    */
-  def addComment(taskId: Int, comment: String)
-      (implicit toEntityMarshallerComment: ToEntityMarshaller[Comment], toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route
+  def addComment(taskId: Int, comment: String)(implicit auth: Auth):Result[Comment]
 
   /**
    * Code: 200, Message: successful operation
    * Code: 400, Message: Invalid message format, DataType: GeneralError
    * Code: 404, Message: Task not found
    */
-  def deleteComment(commentId: Int)
-      (implicit toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route
-
-  def getComments200(responseCommentarray: Seq[Comment])(implicit toEntityMarshallerCommentarray: ToEntityMarshaller[Seq[Comment]]): Route =
-    complete((200, responseCommentarray))
+  def deleteComment(commentId: Int)(implicit auth: Auth):Result[Comment]
 
   /**
    * Code: 200, Message: successful operation, DataType: Seq[Comment]
    * Code: 400, Message: Invalid message format, DataType: GeneralError
    * Code: 404, Message: Task not found
    */
-  def getComments(taskId: Int)
-      (implicit toEntityMarshallerCommentarray: ToEntityMarshaller[Seq[Comment]], toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route
+  def getComments(taskId: Int)(implicit auth: Auth):Result[Seq[Comment]]
 
   /**
    * Code: 200, Message: successful operation, DataType: Comment
    * Code: 400, Message: Invalid message format, DataType: GeneralError
    * Code: 404, Message: Task not found
    */
-  def updateComment(comment:Comment)
-      (implicit toEntityMarshallerComment: ToEntityMarshaller[Comment], toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]): Route
+  def updateComment(comment:Comment)(implicit auth: Auth):Result[Comment]
 
 }
 
@@ -105,7 +93,7 @@ trait CommentApiMarshaller {
 
   implicit def toEntityMarshallerCommentarray: ToEntityMarshaller[Seq[Comment]]
 
-  implicit def toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError]
+  implicit def toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralResult]
 
 }
 

@@ -2,7 +2,8 @@ package work.arudenko.kanban.backend.serialization.shitty
 
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
 import akka.http.scaladsl.unmarshalling.FromEntityUnmarshaller
-import work.arudenko.kanban.backend.model.{Comment, GeneralError}
+import work.arudenko.kanban.backend.api.CommentApiMarshaller
+import work.arudenko.kanban.backend.model.{Comment, GeneralResult}
 
 object CommentApiMarshallerImpl extends CommentApiMarshaller with JacksonMarshaller {
 
@@ -15,6 +16,6 @@ object CommentApiMarshallerImpl extends CommentApiMarshaller with JacksonMarshal
   override implicit def toEntityMarshallerCommentarray: ToEntityMarshaller[Seq[Comment]] =
     getMarshaller[Seq[Comment]]
 
-  override implicit def toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralError] =
-    getMarshaller[GeneralError]
+  override implicit def toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralResult] =
+    getMarshaller[GeneralResult]
 }

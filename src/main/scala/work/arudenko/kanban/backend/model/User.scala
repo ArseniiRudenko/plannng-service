@@ -81,7 +81,7 @@ object User extends WithCommonSqlOperations[User]{
       rs.boolean("is_admin")
     )
 
-  def getLoginUser(email:String): Option[User] = getOne(sql" select * from $table where email=$email and enabled=true")
+  def getLoginUser(email:String): Option[User] = getOne(sql" select * from $table where email=$email and is_enabled=true")
 
   def getUser(email:String): Option[User] = getOne(sql" select * from $table where email=$email")
 
