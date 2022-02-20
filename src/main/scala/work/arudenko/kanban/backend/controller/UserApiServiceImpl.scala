@@ -213,7 +213,9 @@ class UserApiServiceImpl(implicit actorSystem: ActorSystem) extends UserApiServi
       case Some(value) => User.emailActivateAccount(value.id) match {
         case 1 => SuccessEmpty
         case 0 => NotFound
-        case e => logger.error(s"returned number of records $e when trying to activate user $value by email token $emailToken");GeneralResult(500,"db error")
+        case e =>
+          logger.error(s"returned number of records $e when trying to activate user $value by email token $emailToken")
+          GeneralResult(500,"db error")
       }
       case None => NotFound
     }

@@ -39,6 +39,7 @@ object Auth{
   private val memLimit: Int = conf.getInt("hash.memLimit")
   private val outputLength: Int = conf.getInt("hash.outputLength")
   private val parallelism: Int = conf.getInt("hash.parallelism")
+  private val saltLength: Int = conf.getInt("hash.saltLength")
 
 
 
@@ -60,7 +61,7 @@ object Auth{
 
   def generateSalt: Array[Byte] = {
     val secureRandom = new SecureRandom
-    val salt = new Array[Byte](128)
+    val salt = new Array[Byte](saltLength)
     secureRandom.nextBytes(salt)
     salt
   }
@@ -73,8 +74,9 @@ object Auth{
 
   def verifyPassword(password:String,storedPassword:String):Boolean = {
     val creds = Credentials(Some(OAuth2BearerToken(password))).asInstanceOf[Credentials.Provided]
-    val (secret, salt) = storedPassword.splitAt(storedPassword.lastIndexOf(":"))
-    creds.verify(secret, curPw => generateArgon2id(curPw, salt.tail).toBase64)
+    val pos=storedPassword.lastIndexOf(":")
+    val (secret, salt) = (storedPassword.take(pos), storedPassword.drop(pos+1))
+    creds.verify(secret, curPw => generateArgon2id(curPw, salt).toBase64)
   }
 
 }
