@@ -17,7 +17,7 @@ import scala.util.Try
 */
 final case class User (
   id:Int,
-  firstName: String,
+  firstName: Option[String],
   lastName: Option[String],
   email: Option[String],
   password: Option[String],
@@ -44,7 +44,7 @@ final case class UserUpdateInfo (
 )
 
 final case class UserInfo(
-  firstName: String,
+  firstName: Option[String],
   lastName: Option[String],
   email: Option[String],
   phone: Option[String],
@@ -72,7 +72,7 @@ object User extends WithCommonSqlOperations[User]{
   override def sqlExtractor(rs: WrappedResultSet): User =
     new User(
       rs.int("id"),
-      rs.string("first_name"),
+      rs.stringOpt("first_name"),
       rs.stringOpt("last_name"),
       rs.stringOpt("email"),
       rs.stringOpt("password"),
@@ -112,7 +112,7 @@ object User extends WithCommonSqlOperations[User]{
        """)).toOptionLogInfo
 
 
-  //TODO: if email updated, email_verified flag should be set to false
+  //TODO: if email is updated, is_email_verified flag should be set to false
   def updateUser(user:User,userUpdateInfo: UserUpdateInfo):Option[Int] =
    Try(
      update(

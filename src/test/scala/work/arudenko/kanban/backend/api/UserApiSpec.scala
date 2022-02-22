@@ -28,7 +28,7 @@ class UserApiSpec extends AnyFlatSpec with should.Matchers {
     val userRes= login.flatMap(loginResult=> {
       val userRequest = HttpRequest(
         method = HttpMethods.GET,
-        uri = "http://localhost:9000/user/",
+        uri = "http://localhost:9000/user/me/",
         headers = Authorization.oauth2(loginResult._2.data.utf8String) :: Nil
       )
       Http().singleRequest(userRequest).flatMap(res=>{

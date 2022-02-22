@@ -68,16 +68,19 @@ class UserApiServiceImpl(implicit actorSystem: ActorSystem) extends UserApiServi
     else
       NotAuthorized
 
+
+  //TODO: add separate get user for admins, that returns id
   /**
    * Code: 200, Message: successful operation, DataType: User
    * Code: 400, Message: Invalid message format, DataType: GeneralError
    * Code: 404, Message: User not found
    */
-  override def getUserByName(username: String)(implicit auth: Auth):Result[UserInfo] =
-    User.getUser(username) match {
+  override def getUserByEmail(username: String)(implicit auth: Auth):Result[UserInfo] =
+    User.getUser(username) match { //TODO: think of a way to limit this to subset of users(that current user already 'knows').
       case Some(value) => SuccessEntity(UserInfo(value))
       case None => NotFound
     }
+
 
   import work.arudenko.kanban.backend.orm.RedisContext._
 
@@ -165,14 +168,15 @@ class UserApiServiceImpl(implicit actorSystem: ActorSystem) extends UserApiServi
    * Code: 400, Message: Invalid message format, DataType: GeneralError
    * Code: 404, Message: User not found
    */
-  override def updateUser(user: UserUpdateInfo)(implicit auth: Auth):Result[User] = {
-    val userWithPreparedValues = user.copy(newPassword = user.newPassword.map(Auth.hashPassword))
-    User.getUser(user.email) match {
+  override def updateUser(user: User)(implicit auth: Auth):Result[User] = {
+    val userWithPreparedValues = user.copy(password = user.password.map(Auth.hashPassword))
+    User.get(user.id) match {
         case Some(oldUserValues) =>
-          processUserUpdate(oldUserValues, userWithPreparedValues)
+          processUserUpdate(oldUserValues, ???) //TODO:update user
         case None => NotFound
     }
   }
+
 
   def processUserUpdate(oldSet:User,newSet:UserUpdateInfo):Result[User] =
     User.updateUser(oldSet,newSet) match {

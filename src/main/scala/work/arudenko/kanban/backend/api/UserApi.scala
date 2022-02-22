@@ -78,7 +78,7 @@ class UserApi(
         implicit auth =>
           post {
             entity(as[String]) { user =>
-              userService.getUserByName(username = user)
+              userService.getUserByEmail(username = user)
             }
           }
       }
@@ -166,7 +166,7 @@ trait UserApiService {
    * Code: 400, Message: Invalid message format, DataType: GeneralError
    * Code: 404, Message: User not found
    */
-  def getUserByName(username: String)(implicit auth: Auth): Result[UserInfo]
+  def getUserByEmail(username: String)(implicit auth: Auth): Result[UserInfo]
 
   def getCurrentUser(auth: Auth): Result[UserInfo]
 }

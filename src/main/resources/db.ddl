@@ -40,6 +40,57 @@ create unique index peoples_email_uindex
 create unique index peoples_first_name_last_name_email_uindex
     on peoples (first_name, last_name, email);
 
+create table commits
+(
+    hash    integer                  not null
+        constraint commits_pk
+            primary key,
+    author  varchar                  not null,
+    message text                     not null,
+    date    timestamp with time zone not null
+);
+
+alter table commits
+    owner to postgres;
+
+create unique index commits_hash_uindex
+    on commits (hash);
+
+create table tags
+(
+    id          serial
+        constraint tags_pk
+            primary key,
+    name        varchar                                not null,
+    description varchar,
+    created_at  timestamp with time zone default now() not null
+);
+
+alter table tags
+    owner to postgres;
+
+create unique index tags_id_uindex
+    on tags (id);
+
+create unique index tags_name_uindex
+    on tags (name);
+
+create table project
+(
+    id          serial
+        constraint project_pk
+            primary key,
+    name        varchar not null,
+    description varchar,
+    organizer   integer not null
+        constraint project_peoples_id_fk
+            references peoples
+            on update cascade on delete restrict
+);
+
+alter table project
+    owner to postgres;
+
 create table issues
 (
     id             serial
@@ -67,7 +118,10 @@ create table issues
             references peoples,
     updated_by     integer
         constraint issues_peoples_id_fk_3
-            references peoples
+            references peoples,
+    project        integer                                                          not null
+        constraint issues_project_id_fk
+            references project
 );
 
 alter table issues
@@ -104,22 +158,6 @@ alter table spent_time
 
 create unique index spent_time_id_uindex
     on spent_time (id);
-
-create table commits
-(
-    hash    integer                  not null
-        constraint commits_pk
-            primary key,
-    author  varchar                  not null,
-    message text                     not null,
-    date    timestamp with time zone not null
-);
-
-alter table commits
-    owner to postgres;
-
-create unique index commits_hash_uindex
-    on commits (hash);
 
 create table issue_comments
 (
@@ -169,25 +207,6 @@ alter sequence issue_status_id_seq owned by issue_status_log.id;
 create unique index issue_status_id_uindex
     on issue_status_log (id);
 
-create table tags
-(
-    id          serial
-        constraint tags_pk
-            primary key,
-    name        varchar                                not null,
-    description varchar,
-    created_at  timestamp with time zone default now() not null
-);
-
-alter table tags
-    owner to postgres;
-
-create unique index tags_id_uindex
-    on tags (id);
-
-create unique index tags_name_uindex
-    on tags (name);
-
 create table tag_to_issue
 (
     tag_id     integer                                not null
@@ -206,6 +225,22 @@ alter table tag_to_issue
 
 create unique index tag_to_issue_tag_id_issue_id_uindex
     on tag_to_issue (tag_id, issue_id);
+
+create unique index project_id_uindex
+    on project (id);
+
+create table project_membership
+(
+    person  integer not null
+        constraint project_membership_peoples_id_fk
+            references peoples,
+    project integer not null
+        constraint project_membership_project_id_fk
+            references project
+);
+
+alter table project_membership
+    owner to postgres;
 
 create view chlid_issue_count_per_status(parent, cur_status, count) as
 SELECT issues.parent,
@@ -466,4 +501,24 @@ create trigger add_status_log_on_update
     for each row
     when (old.cur_status IS DISTINCT FROM new.cur_status)
 execute procedure function_add_status_log_on_update();
+
+create function function_add_member_on_create() returns trigger
+    language plpgsql
+as
+$$
+BEGIN
+    INSERT INTO
+        project_track.project_membership(person, project)
+    VALUES(new.organizer,new.id);
+    return new;
+END;
+$$;
+
+alter function function_add_member_on_create() owner to postgres;
+
+create trigger add_membership
+    after insert
+    on project
+    for each row
+execute procedure function_add_member_on_create();
 
