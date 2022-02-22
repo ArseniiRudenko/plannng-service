@@ -13,17 +13,19 @@ alter type priority owner to postgres;
 
 create table peoples
 (
-    id         serial
+    id                serial
         constraint peoples_pk
             primary key,
-    first_name varchar                                not null,
-    last_name  varchar,
-    email      varchar,
-    password   varchar,
-    phone      varchar,
-    is_enabled boolean                  default false not null,
-    is_admin   boolean                  default false not null,
-    created_at timestamp with time zone default now() not null
+    first_name        varchar,
+    last_name         varchar,
+    email             varchar,
+    password          varchar,
+    phone             varchar,
+    is_enabled        boolean                  default false not null,
+    is_admin          boolean                  default false not null,
+    created_at        timestamp with time zone default now() not null,
+    updated_at        timestamp with time zone default now() not null,
+    is_eamil_verified boolean                  default false not null
 );
 
 alter table peoples
@@ -32,11 +34,11 @@ alter table peoples
 create unique index peoples_id_uindex
     on peoples (id);
 
-create unique index peoples_first_name_last_name_uindex
-    on peoples (first_name, last_name);
-
 create unique index peoples_email_uindex
     on peoples (email);
+
+create unique index peoples_first_name_last_name_email_uindex
+    on peoples (first_name, last_name, email);
 
 create table issues
 (

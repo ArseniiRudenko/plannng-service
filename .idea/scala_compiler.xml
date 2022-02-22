@@ -2,9 +2,9 @@
 <project version="4">
   <component name="ScalaCompilerConfiguration">
     <profile name="sbt 1" modules="backend_7433" />
-    <profile name="sbt 2" modules="swagger-scala-akka-http-server">
+    <profile name="sbt 2" modules="scala-akka-http-server,swagger-scala-akka-http-server">
       <plugins>
-        <plugin path="$USER_HOME$/.cache/coursier/v1/https/repo.artima.com/releases/com/artima/supersafe/supersafe_2.12.15/1.1.12/supersafe_2.12.15-1.1.12.jar" />
+        <plugin path="$USER_HOME$/.cache/coursier/v1/https/repo.artima.com/releases/com/artima/supersafe/supersafe_2.13.6/1.1.12/supersafe_2.13.6-1.1.12.jar" />
       </plugins>
     </profile>
   </component>

@@ -1,7 +1,7 @@
-version := "1.0.0"
-name := "swagger-scala-akka-http-server"
-organization := "io.swagger"
-scalaVersion := "2.12.15"
+version := "0.0.1-SNAPSHOT"
+name := "scala-akka-http-server"
+organization := "arudenko.work"
+scalaVersion := "2.13.6"
 
 libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-http" % "10.2.7",
@@ -10,8 +10,8 @@ libraryDependencies ++= Seq(
   "org.scalikejdbc" %% "scalikejdbc"       % "4.0.0",
   "ch.qos.logback"  %  "logback-classic"   % "1.2.10",
   "com.typesafe.scala-logging" %% "scala-logging" % "3.9.4",
-  "org.postgresql"  %  "postgresql"     % "42.3.1",
-  "com.typesafe" % "config" % "1.4.1",
+  "org.postgresql"  %  "postgresql"     % "42.3.2",
+  "com.typesafe" % "config" % "1.4.2",
   "org.bouncycastle" % "bcprov-jdk15on" % "1.70",
   "net.debasishg" %% "redisclient" % "3.42",
   "io.suzaku" %% "boopickle" % "1.4.0",
@@ -19,3 +19,7 @@ libraryDependencies ++= Seq(
   "org.scalactic" %% "scalactic" % "3.2.10"% "test",
   "org.scalatest" %% "scalatest" % "3.2.10" % "test"
 )
+
+enablePlugins(GatlingPlugin)
+libraryDependencies += "io.gatling.highcharts" % "gatling-charts-highcharts" % "3.7.4" % "test"
+libraryDependencies += "io.gatling"            % "gatling-test-framework"    % "3.7.4" % "test"

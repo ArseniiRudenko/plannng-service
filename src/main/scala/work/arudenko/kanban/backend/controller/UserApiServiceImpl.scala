@@ -47,7 +47,7 @@ class UserApiServiceImpl(implicit actorSystem: ActorSystem) extends UserApiServi
         EmailService.sendActivaltionEmail(finalUser,emailVerificationToken)
       }.onComplete {
         case Failure(exception) => logger.error("failed sending sign up email", exception)
-        case Success(value) => logger.trace(s"success sending sign up email")
+        case Success(_) => logger.trace(s"success sending sign up email")
       }
         SuccessEmpty
       case None => WrongInput("failed creating user,info is wrong or user already exists")
@@ -80,9 +80,6 @@ class UserApiServiceImpl(implicit actorSystem: ActorSystem) extends UserApiServi
     }
 
   import work.arudenko.kanban.backend.orm.RedisContext._
-  import com.redis.serialization._
-  import com.redis.serialization.Parse.Implicits._
-  import boopickle.Default._
 
   private def getUserFromToken(id:String,oneTime:Boolean=true):Option[User] = {
     redis.withClient {
@@ -135,7 +132,7 @@ class UserApiServiceImpl(implicit actorSystem: ActorSystem) extends UserApiServi
    * Code: 200, Message: Success
    * Code: 400, Message: Invalid message format, DataType: GeneralError
    */
-  override def logoutUser(implicit auth: Auth):Result[User] =
+  override def logoutUser(auth: Auth):Result[User] =
         redis.withClient {
           client =>
             client.del(auth.token) match {
@@ -156,7 +153,7 @@ class UserApiServiceImpl(implicit actorSystem: ActorSystem) extends UserApiServi
           User.createUsers(user) match {
             case Some(value) => value match {
               case v if v.length == user.length => SuccessEmpty
-              case v => WrongInput(s"created $v users out of ${user.length}")
+              case v => WrongInput(s"created ${v.length} users out of ${user.length}")
             }
             case None => WrongInput(s"failed creating users")
           }
@@ -170,16 +167,11 @@ class UserApiServiceImpl(implicit actorSystem: ActorSystem) extends UserApiServi
    */
   override def updateUser(user: UserUpdateInfo)(implicit auth: Auth):Result[User] = {
     val userWithPreparedValues = user.copy(newPassword = user.newPassword.map(Auth.hashPassword))
-    if (auth.user.admin) {
-      User.getUser(user.email) match {
+    User.getUser(user.email) match {
         case Some(oldUserValues) =>
           processUserUpdate(oldUserValues, userWithPreparedValues)
         case None => NotFound
-      }
-    } else if (auth.user.email.contains(user.email) && auth.verifyPassword(user.password)) {
-      processUserUpdate(auth.user, userWithPreparedValues)
-    } else
-      NotAuthorized
+    }
   }
 
   def processUserUpdate(oldSet:User,newSet:UserUpdateInfo):Result[User] =
@@ -235,4 +227,25 @@ class UserApiServiceImpl(implicit actorSystem: ActorSystem) extends UserApiServi
     }
     SuccessEmpty
   }
+
+  override def getCurrentUser(auth: Auth): Result[UserInfo] =
+    SuccessEntity(UserInfo(auth.user))
+
+
+  override def deleteUser(auth: Auth): Result[User] = {
+    User.delete(auth.user.id) match {
+      case 0 => WrongInput("user already removed")
+      case 1 => SuccessEmpty
+      case p =>
+        logger.error(s"returned $p value from request to remove user ${auth.user} by himself")
+        GeneralResult(500,"db error")
+    }
+  }
+
+  override def updateSelf(user: UserUpdateInfo)(implicit auth: Auth): Result[User] =
+    if(auth.verifyPassword(user.password)) {
+      val userWithPreparedValues = user.copy(newPassword = user.newPassword.map(Auth.hashPassword))
+      processUserUpdate(auth.user, userWithPreparedValues)
+    }else
+      NotAuthorized
 }

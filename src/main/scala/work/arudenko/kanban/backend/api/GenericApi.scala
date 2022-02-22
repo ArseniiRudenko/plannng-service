@@ -23,6 +23,11 @@ trait GenericApi {
       }
   }
 
+
+  val adminAuthenticator:Authenticator[Auth] =
+    authenticator.andThen(_.flatMap(auth=>if(auth.user.admin) Some(auth) else None))
+
+
   protected implicit def resultRoute[T](value:Result[T])(implicit marshaller: ToEntityMarshaller[T]): Route = value match {
     case GeneralResult(code, message) => complete(code,message)
     case SuccessEmpty => complete((200,"Success"))

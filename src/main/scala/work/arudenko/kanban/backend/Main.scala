@@ -8,8 +8,6 @@ import work.arudenko.kanban.backend.serialization.shitty.{CommentApiMarshallerIm
 
 object Main {
 
-
-
   def main(args:Array[String]): Unit ={
     implicit val actorSystem: ActorSystem = ActorSystem("BackendActorSystem")
     val commentApi = new CommentApi(CommentApiServiceImpl,CommentApiMarshallerImpl)

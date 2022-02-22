@@ -2,8 +2,8 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/swagger-scala-akka-http-server.iml" filepath="$PROJECT_DIR$/.idea/modules/swagger-scala-akka-http-server.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/swagger-scala-akka-http-server-build.iml" filepath="$PROJECT_DIR$/.idea/modules/swagger-scala-akka-http-server-build.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/scala-akka-http-server.iml" filepath="$PROJECT_DIR$/.idea/modules/scala-akka-http-server.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/scala-akka-http-server-build.iml" filepath="$PROJECT_DIR$/.idea/modules/scala-akka-http-server-build.iml" />
     </modules>
   </component>
 </project>

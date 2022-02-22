@@ -27,7 +27,7 @@ final case class User (
 )
 
 final case class UserCreationInfo (
-  firstName: String,
+  firstName: Option[String],
   lastName: Option[String],
   email: String,
   password: String,
@@ -37,7 +37,7 @@ final case class UserCreationInfo (
 final case class UserUpdateInfo (
   firstName: Option[String],
   lastName: Option[String],
-  email: String,
+  email: Option[String],
   password: String,
   newPassword:Option[String],
   phone: Option[String]
@@ -94,7 +94,7 @@ object User extends WithCommonSqlOperations[User]{
     update(sql" update $table set is_email_verified=true,is_enabled=true where id=$userId")
   }
 
-  def createUsers(users:Seq[UserInfo]): Option[IndexedSeq[Long]] =Try( DB localTx{
+  def createUsers(users:Seq[UserInfo]): Option[Array[Long]] =Try( DB localTx{
     implicit session=>
       sql"insert into $table (first_name,last_name,email,phone,is_enabled,is_admin) values(?,?,?,?,?,?)"
         .batchAndReturnGeneratedKey(users.map(u=>u.productIterator.toSeq)).apply()
@@ -112,7 +112,7 @@ object User extends WithCommonSqlOperations[User]{
        """)).toOptionLogInfo
 
 
-
+  //TODO: if email updated, email_verified flag should be set to false
   def updateUser(user:User,userUpdateInfo: UserUpdateInfo):Option[Int] =
    Try(
      update(
@@ -121,6 +121,7 @@ object User extends WithCommonSqlOperations[User]{
            set
            first_name=${userUpdateInfo.firstName.getOrElse(user.firstName)},
            last_name=${userUpdateInfo.lastName.orElse(user.lastName)},
+           email=${userUpdateInfo.email.orElse(user.email)},
            password=${userUpdateInfo.newPassword.orElse(user.password)},
            phone=${userUpdateInfo.phone.orElse(user.phone)}
            where id=${user.id}""")

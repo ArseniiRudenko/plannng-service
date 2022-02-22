@@ -8,12 +8,12 @@ import work.arudenko.kanban.backend.model.SuccessEntity
 class UserApiImplSpec extends AnyFlatSpec with should.Matchers {
 
 
-  it should "login user with login and password" in {
+  "User API" should "login user with login and password" in {
     implicit val actorSystem: ActorSystem =ActorSystem("test")
     val impl = new UserApiServiceImpl
     val res =impl.loginUser("arsenii@test","test")
     println(res)
-    res should matchPattern{case SuccessEntity(e)=> }
+    res should matchPattern{case SuccessEntity(_)=> }
   }
 
 }

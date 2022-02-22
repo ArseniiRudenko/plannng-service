@@ -1,6 +1,7 @@
 package work.arudenko.kanban.backend.model
 
-import org.scalatest._
+import org.scalatest.{flatspec,matchers}
+import org.scalatest.{Tag=>ScalatestTag}
 import flatspec._
 import matchers._
 

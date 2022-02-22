@@ -13,8 +13,18 @@ object UserApiMarshallerImpl extends UserApiMarshaller with BoopickleMarshaller 
 
   import boopickle.Default._
 
-  val userParser: Parse[User] = Parse(arr=>Unpickle[User].fromBytes(ByteBuffer.wrap(arr))(unpickleState))
-  val userSerializer:Format = Format({case u:User => Pickle.intoBytes(u)(pickleState,implicitly[Pickler[User]]).array()})
+  val userParser: Parse[User] = Parse(arr=>Unpickle[User].fromBytes(ByteBuffer.wrap(arr)))
+
+  val userSerializer:Format = Format(
+    {
+      case u:User =>{
+        val buf = Pickle.intoBytes(u)
+        val arr = Array.ofDim[Byte](buf.remaining)
+        buf.get(arr)
+        arr
+      }
+    }
+  )
 
   override implicit def fromEntityUnmarshallerUserCreate: FromEntityUnmarshaller[UserCreationInfo] = getUnmarshaller[UserCreationInfo]
 

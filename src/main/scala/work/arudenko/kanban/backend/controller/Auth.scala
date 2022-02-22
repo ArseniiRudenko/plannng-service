@@ -23,8 +23,6 @@ case class Auth(token:String, user:User){
 
   def verifyPassword(password:String):Boolean =
     Auth.verifyPassword(password,user.password.get)
-
-
 }
 
 object Auth{
