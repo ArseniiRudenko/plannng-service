@@ -253,5 +253,7 @@ class UserApiServiceImpl(implicit actorSystem: ActorSystem) extends UserApiServi
     }else
       NotAuthorized
 
+  override def getUser(knownInfo: UserInfo): Result[Seq[User]] = ???
 
+  override def getUser(id: String): Result[User] = ???
 }

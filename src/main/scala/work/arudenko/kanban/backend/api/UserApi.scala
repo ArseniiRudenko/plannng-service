@@ -90,12 +90,17 @@ class UserApi(
             entity(as[String]) { user =>
               userService.deleteUser(username = user)
             }
-          }~
+          } ~
           put {
-            entity(as[User]) { user =>
+              entity(as[User]) { user =>
                 userService.updateUser(user = user)
-            }
-          }
+              }
+          } ~
+            path(Segment){ id=>
+              get{
+                userService.getUser(id)
+              }
+            }~
           post {
             entity(as[User]) { user =>
               userService.getUser(knownInfo = user)
@@ -116,7 +121,8 @@ class UserApi(
 
 trait UserApiService {
 
-  def getUser(knownInfo: User): Result[Seq[User]]
+  def getUser(id: String): Result[User]
+  def getUser(knownInfo: UserInfo): Result[Seq[User]]
 
   /**
    * Code: 200, Message: Success
