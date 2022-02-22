@@ -6,6 +6,7 @@ import boopickle.{DecoderSpeed, Default, EncoderSpeed}
 import com.redis.serialization.{Format, Parse}
 import work.arudenko.kanban.backend.api.UserApiMarshaller
 import work.arudenko.kanban.backend.model._
+import work.arudenko.kanban.backend.serialization.shitty.UserApiMarshallerImpl.{getMarshaller, getUnmarshaller}
 
 import java.nio.ByteBuffer
 
@@ -37,4 +38,8 @@ object UserApiMarshallerImpl extends UserApiMarshaller with BoopickleMarshaller 
   override implicit def toEntityMarshallerUser: ToEntityMarshaller[User] = getMarshaller[User]
 
   override implicit def toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralResult] = getMarshaller[GeneralResult]
+
+  override implicit def fromEntityUnmarshallerUser: FromEntityUnmarshaller[User] = getUnmarshaller[User]
+
+  override implicit def toEntityMarshallerUserSeq: ToEntityMarshaller[Seq[User]] = getMarshaller[Seq[User]]
 }

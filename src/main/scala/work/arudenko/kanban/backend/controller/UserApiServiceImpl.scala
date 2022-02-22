@@ -136,32 +136,32 @@ class UserApiServiceImpl(implicit actorSystem: ActorSystem) extends UserApiServi
    * Code: 400, Message: Invalid message format, DataType: GeneralError
    */
   override def logoutUser(auth: Auth):Result[User] =
-        redis.withClient {
-          client =>
-            client.del(auth.token) match {
-              case Some(value) if value == 1 => SuccessEmpty
-              case Some(value) =>
-                logger.warn(s"logout for user ${auth.user} and token ${auth.token} returned value $value, which is not expected")
-                SuccessEmpty
-              case None => WrongInput("not logged in")
-            }
+    redis.withClient {
+      client =>
+        client.del(auth.token) match {
+          case Some(value) if value == 1 => SuccessEmpty
+          case Some(value) =>
+            logger.warn(s"logout for user ${auth.user} and token ${auth.token} returned value $value, which is not expected")
+            SuccessEmpty
+          case None => WrongInput("not logged in")
         }
+    }
 
   /**
    * Code: 200, Message: Success
    * Code: 400, Message: Invalid message format, DataType: GeneralError
    */
   override def createUsersWithArrayInput(user: Seq[UserInfo])(implicit auth: Auth):Result[User] =
-        if(auth.user.admin)
-          User.createUsers(user) match {
-            case Some(value) => value match {
-              case v if v.length == user.length => SuccessEmpty
-              case v => WrongInput(s"created ${v.length} users out of ${user.length}")
-            }
-            case None => WrongInput(s"failed creating users")
-          }
-        else
-          NotAuthorized
+    if(auth.user.admin)
+      User.createUsers(user) match {
+        case Some(value) => value match {
+          case v if v.length == user.length => SuccessEmpty
+          case v => WrongInput(s"created ${v.length} users out of ${user.length}")
+        }
+        case None => WrongInput(s"failed creating users")
+      }
+    else
+      NotAuthorized
 
   /**
    * Code: 200, Message: successful operation, DataType: User
@@ -171,9 +171,9 @@ class UserApiServiceImpl(implicit actorSystem: ActorSystem) extends UserApiServi
   override def updateUser(user: User)(implicit auth: Auth):Result[User] = {
     val userWithPreparedValues = user.copy(password = user.password.map(Auth.hashPassword))
     User.get(user.id) match {
-        case Some(oldUserValues) =>
-          processUserUpdate(oldUserValues, ???) //TODO:update user
-        case None => NotFound
+      case Some(oldUserValues) =>
+        processUserUpdate(oldUserValues, ???) //TODO:update user
+      case None => NotFound
     }
   }
 
@@ -252,4 +252,6 @@ class UserApiServiceImpl(implicit actorSystem: ActorSystem) extends UserApiServi
       processUserUpdate(auth.user, userWithPreparedValues)
     }else
       NotAuthorized
+
+
 }

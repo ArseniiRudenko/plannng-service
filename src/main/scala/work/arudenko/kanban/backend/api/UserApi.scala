@@ -92,8 +92,13 @@ class UserApi(
             }
           }~
           put {
-            entity(as[UserUpdateInfo]) { user =>
+            entity(as[User]) { user =>
                 userService.updateUser(user = user)
+            }
+          }
+          post {
+            entity(as[User]) { user =>
+              userService.getUser(knownInfo = user)
             }
           }
           path( "createWithArray") {
@@ -106,11 +111,12 @@ class UserApi(
       }
     }
 
-
 }
 
 
 trait UserApiService {
+
+  def getUser(knownInfo: User): Result[Seq[User]]
 
   /**
    * Code: 200, Message: Success
@@ -148,7 +154,7 @@ trait UserApiService {
    * Code: 400, Message: Invalid message format, DataType: GeneralError
    * Code: 404, Message: User not found
    */
-  def updateUser(user: UserUpdateInfo)(implicit auth: Auth): Result[User]
+  def updateUser(user: User)(implicit auth: Auth): Result[User]
 
   def updateSelf(user: UserUpdateInfo)(implicit auth: Auth): Result[User]
 
@@ -169,14 +175,18 @@ trait UserApiService {
   def getUserByEmail(username: String)(implicit auth: Auth): Result[UserInfo]
 
   def getCurrentUser(auth: Auth): Result[UserInfo]
+
+
 }
 
 trait UserApiMarshaller{
   implicit def fromEntityUnmarshallerUserCreate: FromEntityUnmarshaller[UserCreationInfo]
   implicit def fromEntityUnmarshallerUserUpdate: FromEntityUnmarshaller[UserUpdateInfo]
+  implicit def fromEntityUnmarshallerUser: FromEntityUnmarshaller[User]
   implicit def fromEntityUnmarshallerUserList: FromEntityUnmarshaller[Seq[UserInfo]]
   implicit def toEntityMarshallerUserInfo: ToEntityMarshaller[UserInfo]
   implicit def toEntityMarshallerUser: ToEntityMarshaller[User]
+  implicit def toEntityMarshallerUserSeq: ToEntityMarshaller[Seq[User]]
   implicit def toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralResult]
 
 }

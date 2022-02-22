@@ -18,4 +18,8 @@ object UserApiMarshallerImpl extends UserApiMarshaller with JacksonMarshaller {
   override implicit def toEntityMarshallerUser: ToEntityMarshaller[User] = getMarshaller[User]
 
   override implicit def toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralResult] = getMarshaller[GeneralResult]
+
+  override implicit def fromEntityUnmarshallerUser: FromEntityUnmarshaller[User] = getUnmarshaller[User]
+
+  override implicit def toEntityMarshallerUserSeq: ToEntityMarshaller[Seq[User]] = getMarshaller[Seq[User]]
 }
