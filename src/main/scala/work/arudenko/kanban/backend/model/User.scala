@@ -84,6 +84,21 @@ object User extends WithCommonSqlOperations[User] {
 
   def getUser(email: String): Option[User] = getOne(sql" select * from $table where email=$email")
 
+  private val u = User.syntax("u")
+  def searchUser(userInfo: UserInfo): Seq[User] = getList(
+    withSQL {
+    select.from(User as u)
+      .where(
+        sqls.toAndConditionOpt(
+          userInfo.firstName.map(fn => sqls.eq(u.column("first_name"), fn)),
+          userInfo.lastName.map(fn => sqls.eq(u.column("last_name"), fn)),
+          userInfo.email.map(fn => sqls.eq(u.column("email"), fn)),
+          userInfo.phone.map(fn => sqls.eq(u.column("phone"), fn))
+        )
+      )
+    }
+  )
+
   def getId(email: String): Option[Int] =
     DB readOnly { implicit session =>
       sql" select id from $table where email=$email ".map(rs => rs.int("id")).single.apply()
@@ -127,7 +142,7 @@ object User extends WithCommonSqlOperations[User] {
            where id=${user.id}""")
   ).toOptionLogInfo
 
-  //TODO: if email is updated, is_email_verified flag should be set to false
+
   def updateUser(user: User, userUpdateInfo: UserUpdateInfo): Option[Int] =
   Try(
   update(

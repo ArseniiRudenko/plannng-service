@@ -13,7 +13,8 @@ object AdminUserApiServiceImpl extends AdminUserApiService with LazyLogging{
     }
 
 
-  override def getUser(knownInfo: UserInfo): Result[Seq[User]] = ???
+  override def getUser(knownInfo: UserInfo): Result[Seq[User]] =
+    SuccessEntity(User.searchUser(knownInfo))
 
 
   /**
@@ -50,10 +51,15 @@ object AdminUserApiServiceImpl extends AdminUserApiService with LazyLogging{
    * Code: 404, Message: User not found
    */
   override def updateUser(user: User)(implicit auth: Auth):Result[User] = {
-    User.get(user.id) match {
-      case Some(oldUserValues) =>
-        processUserUpdate(oldUserValues, ???) //TODO:update user
-      case None => NotFound
+    User.updateUser(user) match {
+      case Some(value) => value match {
+        case 0=>NotFound
+        case 1=>SuccessEmpty
+        case e=>
+          logger.error(s"returned value $e for delete request of user $user")
+          GeneralResult(500,"db error")
+      }
+      case None => WrongInput("input blew up on db insert")
     }
   }
 
