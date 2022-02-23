@@ -1,6 +1,7 @@
 package work.arudenko.kanban.backend.model
 
 import scalikejdbc._
+import work.arudenko.kanban.backend.model.User.update
 import work.arudenko.kanban.backend.orm.SqlContext.TryLogged
 import work.arudenko.kanban.backend.orm.WithCommonSqlOperations
 
@@ -23,10 +24,11 @@ final case class User (
   password: Option[String],
   phone: Option[String],
   enabled:Boolean,
+  emailVerified:Boolean,
   admin:Boolean
 )
 
-final case class UserCreationInfo (
+final case class SignUpInfo(
   firstName: Option[String],
   lastName: Option[String],
   email: String,
@@ -47,9 +49,7 @@ final case class UserInfo(
   firstName: Option[String],
   lastName: Option[String],
   email: Option[String],
-  phone: Option[String],
-  enabled:Boolean,
-  admin:Boolean
+  phone: Option[String]
 )
 
 object UserInfo{
@@ -58,15 +58,13 @@ object UserInfo{
       user.firstName,
       user.lastName,
       user.email,
-      user.phone,
-      user.enabled,
-      user.admin
+      user.phone
     )
 }
 
-object User extends WithCommonSqlOperations[User]{
+object User extends WithCommonSqlOperations[User] {
 
-  override val tableName="project_track.peoples"
+  override val tableName = "project_track.peoples"
 
 
   override def sqlExtractor(rs: WrappedResultSet): User =
@@ -78,54 +76,72 @@ object User extends WithCommonSqlOperations[User]{
       rs.stringOpt("password"),
       rs.stringOpt("phone"),
       rs.boolean("is_enabled"),
+      rs.boolean("is_email_verified"),
       rs.boolean("is_admin")
     )
 
-  def getLoginUser(email:String): Option[User] = getOne(sql" select * from $table where email=$email and is_enabled=true")
+  def getLoginUser(email: String): Option[User] = getOne(sql" select * from $table where email=$email and is_enabled=true")
 
-  def getUser(email:String): Option[User] = getOne(sql" select * from $table where email=$email")
+  def getUser(email: String): Option[User] = getOne(sql" select * from $table where email=$email")
 
-  def getId(email:String): Option[Int] =
+  def getId(email: String): Option[Int] =
     DB readOnly { implicit session =>
-      sql" select id from $table where email=$email ".map(rs=>rs.int("id")).single.apply()
+      sql" select id from $table where email=$email ".map(rs => rs.int("id")).single.apply()
     }
 
-  def emailActivateAccount(userId:Int): Int = {
+  def emailActivateAccount(userId: Int): Int = {
     update(sql" update $table set is_email_verified=true,is_enabled=true where id=$userId")
   }
 
-  def createUsers(users:Seq[UserInfo]): Option[Array[Long]] =Try( DB localTx{
-    implicit session=>
-      sql"insert into $table (first_name,last_name,email,phone,is_enabled,is_admin) values(?,?,?,?,?,?)"
-        .batchAndReturnGeneratedKey(users.map(u=>u.productIterator.toSeq)).apply()
+  def createUsers(users: Seq[UserInfo]): Option[Array[Long]] = Try(DB localTx {
+    implicit session =>
+      sql"insert into $table (first_name,last_name,email,phone) values(?,?,?,?)"
+        .batchAndReturnGeneratedKey(users.map(u => u.productIterator.toSeq)).apply()
   }).toOptionLogInfo
 
 
-  def setPassword(userId:Int,password:String): Int =
+  def setPassword(userId: Int, password: String): Int =
     update(sql" update $table set password=$password where id=$userId")
 
-  def signUp(user:UserCreationInfo): Option[Long] = Try(
+  def signUp(user: SignUpInfo): Option[Long] = Try(
     insert(
-    sql"""
+      sql"""
             insert into $table (first_name,last_name,email,password,phone,is_enabled,is_admin) values
             (${user.firstName},${user.lastName},${user.email},${user.password},${user.phone},false,false)
        """)).toOptionLogInfo
 
 
+  def updateUser(user: User):Option[Int] =
+    Try(
+    update(
+    sql"""
+           update $table
+           set
+           first_name=${user.firstName},
+           last_name=${user.lastName},
+           email=${user.email},
+           phone=${user.phone},
+           is_email_verfied=${user.emailVerified},
+           is_enabled=${user.enabled},
+           is_admin=${user.admin}
+           where id=${user.id}""")
+  ).toOptionLogInfo
+
   //TODO: if email is updated, is_email_verified flag should be set to false
-  def updateUser(user:User,userUpdateInfo: UserUpdateInfo):Option[Int] =
-   Try(
-     update(
-      sql"""
+  def updateUser(user: User, userUpdateInfo: UserUpdateInfo): Option[Int] =
+  Try(
+  update(
+    sql"""
            update $table
            set
            first_name=${userUpdateInfo.firstName.getOrElse(user.firstName)},
            last_name=${userUpdateInfo.lastName.orElse(user.lastName)},
            email=${userUpdateInfo.email.orElse(user.email)},
            password=${userUpdateInfo.newPassword.orElse(user.password)},
-           phone=${userUpdateInfo.phone.orElse(user.phone)}
+           phone=${userUpdateInfo.phone.orElse(user.phone)},
+           is_email_verfied=${userUpdateInfo.email.fold(user.emailVerified)(_=>false)}
            where id=${user.id}""")
-   ).toOptionLogInfo
+  ).toOptionLogInfo
 
 
 }

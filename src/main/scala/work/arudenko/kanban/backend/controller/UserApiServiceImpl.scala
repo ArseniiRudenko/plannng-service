@@ -4,7 +4,7 @@ import akka.actor.ActorSystem
 import com.redis.api.StringApi.Always
 import com.typesafe.scalalogging.LazyLogging
 import work.arudenko.kanban.backend.api.UserApiService
-import work.arudenko.kanban.backend.model.{GeneralResult, NotAuthorized, NotFound, Result, SuccessEmpty, SuccessEntity, User, UserCreationInfo, UserInfo, UserUpdateInfo, WrongInput}
+import work.arudenko.kanban.backend.model.{GeneralResult, NotAuthorized, NotFound, Result, SuccessEmpty, SuccessEntity, User, SignUpInfo, UserInfo, UserUpdateInfo, WrongInput}
 import work.arudenko.kanban.backend.serialization.binary.UserApiMarshallerImpl.{userParser, userSerializer}
 import work.arudenko.kanban.backend.services.EmailService
 
@@ -27,8 +27,8 @@ class UserApiServiceImpl(implicit actorSystem: ActorSystem) extends UserApiServi
    * Code: 200, Message: Success
    * Code: 400, Message: Invalid message format, DataType: GeneralError
    */
-  override def createUser(user: UserCreationInfo):Result[UserInfo] = {
-    val userWitPass: UserCreationInfo = user.copy(password = Auth.hashPassword(user.password))
+  override def createUser(user: SignUpInfo):Result[Unit] = {
+    val userWitPass: SignUpInfo = user.copy(password = Auth.hashPassword(user.password))
     val id = User.signUp(userWitPass)
     id match {
       case Some(value) => scala.concurrent.Future {
@@ -40,6 +40,7 @@ class UserApiServiceImpl(implicit actorSystem: ActorSystem) extends UserApiServi
             Some(userWitPass.email),
             Some(userWitPass.password),
             userWitPass.phone,
+            false,
             false,
             false
           )
@@ -54,19 +55,7 @@ class UserApiServiceImpl(implicit actorSystem: ActorSystem) extends UserApiServi
     }
   }
 
-  /**
-   * Code: 200, Message: Success
-   * Code: 400, Message: Invalid message format, DataType: GeneralError
-   * Code: 404, Message: User not found
-   */
-  override def deleteUser(username: String)(implicit auth: Auth):Result[User] =
-    if(auth.user.admin || auth.user.email.contains(username))
-      User.getId(username) match {
-        case Some(value) => User.delete(value); SuccessEmpty
-        case None => NotFound
-      }
-    else
-      NotAuthorized
+
 
 
   //TODO: add separate get user for admins, that returns id
@@ -135,7 +124,7 @@ class UserApiServiceImpl(implicit actorSystem: ActorSystem) extends UserApiServi
    * Code: 200, Message: Success
    * Code: 400, Message: Invalid message format, DataType: GeneralError
    */
-  override def logoutUser(auth: Auth):Result[User] =
+  override def logoutUser(auth: Auth):Result[Unit] =
     redis.withClient {
       client =>
         client.del(auth.token) match {
@@ -147,35 +136,7 @@ class UserApiServiceImpl(implicit actorSystem: ActorSystem) extends UserApiServi
         }
     }
 
-  /**
-   * Code: 200, Message: Success
-   * Code: 400, Message: Invalid message format, DataType: GeneralError
-   */
-  override def createUsersWithArrayInput(user: Seq[UserInfo])(implicit auth: Auth):Result[User] =
-    if(auth.user.admin)
-      User.createUsers(user) match {
-        case Some(value) => value match {
-          case v if v.length == user.length => SuccessEmpty
-          case v => WrongInput(s"created ${v.length} users out of ${user.length}")
-        }
-        case None => WrongInput(s"failed creating users")
-      }
-    else
-      NotAuthorized
 
-  /**
-   * Code: 200, Message: successful operation, DataType: User
-   * Code: 400, Message: Invalid message format, DataType: GeneralError
-   * Code: 404, Message: User not found
-   */
-  override def updateUser(user: User)(implicit auth: Auth):Result[User] = {
-    val userWithPreparedValues = user.copy(password = user.password.map(Auth.hashPassword))
-    User.get(user.id) match {
-      case Some(oldUserValues) =>
-        processUserUpdate(oldUserValues, ???) //TODO:update user
-      case None => NotFound
-    }
-  }
 
 
   def processUserUpdate(oldSet:User,newSet:UserUpdateInfo):Result[User] =
