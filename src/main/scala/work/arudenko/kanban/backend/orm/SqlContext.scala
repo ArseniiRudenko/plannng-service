@@ -13,11 +13,15 @@ object SqlContext  extends LazyLogging{
   import com.typesafe.config.Config
   import com.typesafe.config.ConfigFactory
 
-  val conf: Config = ConfigFactory.load()
-  // initialize JDBC driver & connection pool
-  Class.forName(conf.getString("jdbc.class"))
+  def intSqlContext(): Unit = {
+    val conf: Config = ConfigFactory.load()
+    // initialize JDBC driver & connection pool
+    Class.forName(conf.getString("jdbc.class"))
 
-  ConnectionPool.singleton(conf.getString("jdbc.url"), conf.getString("jdbc.user"), conf.getString("jdbc.password"))
+    ConnectionPool.singleton(conf.getString("jdbc.url"), conf.getString("jdbc.user"), conf.getString("jdbc.password"))
+
+  }
+
 
   implicit class TryLogged[T](val param:Try[T]) extends AnyVal {
     def toOptionLogErr:Option[T] = param match {

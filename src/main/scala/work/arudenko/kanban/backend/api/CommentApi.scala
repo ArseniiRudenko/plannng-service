@@ -19,38 +19,41 @@ class CommentApi(
   
   import commentMarshaller._
 
-  lazy val route: Route =
-    path("task" / IntNumber / "comment") { (taskId) =>
-      authenticateOAuth2("Global", authenticator) {
-        implicit auth =>
-          post {
-            entity(as[String]) { comment =>
-              commentService.addComment(taskId = taskId, comment = comment)
-            }
-          } ~
-            get {
-              commentService.getComments(taskId = taskId)
-            }
-      }
-    } ~
-    path("comment" / IntNumber) { (commentId) =>
-      authenticateOAuth2("Global", authenticator) {
-        implicit auth =>
-          delete {
-            commentService.deleteComment(commentId = commentId)
+  lazy val route: Route = {
+    pathPrefix("comment") {
+      path("task" / IntNumber) { (taskId) =>
+        authenticateOAuth2("Global", authenticator) {
+          implicit auth =>
+            post {
+              entity(as[String]) { comment =>
+                commentService.addComment(taskId = taskId, comment = comment)
+              }
+            } ~
+              get {
+                commentService.getComments(taskId = taskId)
+              }
+        }
+      } ~
+      path(IntNumber) { (commentId) =>
+          authenticateOAuth2("Global", authenticator) {
+            implicit auth =>
+              delete {
+                commentService.deleteComment(commentId = commentId)
+              }
           }
-      }
-    } ~
-    path("comment") {
-      authenticateOAuth2("Global", authenticator) {
-        implicit auth =>
-          put {
-            entity(as[Comment]) { comment =>
-              commentService.updateComment(comment = comment)
-            }
+      } ~
+      pathEndOrSingleSlash{
+          authenticateOAuth2("Global", authenticator) {
+            implicit auth =>
+              put {
+                entity(as[Comment]) { comment =>
+                  commentService.updateComment(comment = comment)
+                }
+              }
           }
       }
     }
+  }
 }
 
 

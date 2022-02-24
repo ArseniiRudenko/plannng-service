@@ -87,7 +87,7 @@ object User extends WithCommonSqlOperations[User] {
   private val u = User.syntax("u")
   def searchUser(userInfo: UserInfo): Seq[User] = getList(
     withSQL {
-    select.from(User as u)
+    select(u.*).from(User as u)
       .where(
         sqls.toAndConditionOpt(
           userInfo.firstName.map(fn => sqls.eq(u.column("first_name"), fn)),

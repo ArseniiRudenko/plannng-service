@@ -26,76 +26,67 @@ class TaskApi(
   import taskMarshaller._
 
   lazy val route: Route =
-    path("task") {
+    pathPrefix("task") {
       authenticateOAuth2("Global", authenticator) {
         implicit auth =>
+        pathEndOrSingleSlash{
           post {
             entity(as[Task]) { task =>
               taskService.addTask(task = task)
             }
           } ~
-          put {
-            entity(as[Task]) { task =>
+            put {
+              entity(as[Task]) { task =>
                 taskService.updateTask(task = task)
+              }
             }
-          }
-      }
-    } ~
-    path("task" / IntNumber) { (taskId) =>
-      authenticateOAuth2("Global", authenticator) {
-        implicit auth =>
-          delete {
-            taskService.deleteTask(taskId = taskId)
+        }~
+        pathPrefix(IntNumber) { (taskId) =>
+          pathEndOrSingleSlash {
+            delete {
+              taskService.deleteTask(taskId = taskId)
+            } ~
+              get {
+                taskService.getTaskById(taskId = taskId)
+              }
+          }~
+          path("status" / Segment) { (status) =>
+            put {
+              taskService.updateTaskStatus(taskId = taskId, status = status)
+            }
           } ~
-          get {
-            taskService.getTaskById(taskId = taskId)
-          }
-      }
-    } ~
-    path("task" / "findByStatus") {
-      authenticateOAuth2("Global", authenticator) {
-        implicit auth =>
-        get {
-          parameters("status".as[String]) { (status) =>
-            taskService.findTaskByStatus(status = status)
-          }
-        }
-      }
-    } ~
-    path("task" / "findByTags") {
-      authenticateOAuth2("Global", authenticator) {
-        implicit auth =>
-        get {
-          parameters("tags".as[String]) { (tags) =>
-            taskService.findTasksByTags(tags = tags)
-          }
-        }
-      }
-    } ~
-    path("task" / IntNumber / "status" / Segment) { (taskId, status) =>
-      authenticateOAuth2("Global", authenticator) {
-        implicit auth =>
-          put {
-            taskService.updateTaskStatus(taskId = taskId, status = status)
-          }
-      }
-    } ~
-    path("task" / IntNumber / "uploadImage") { (taskId) =>
-      authenticateOAuth2("Global", authenticator) {
-        implicit auth =>
-          post {
-            formAndFiles(FileField("file")) { partsAndFiles =>
+          path("uploadImage") {
+            post {
+              formAndFiles(FileField("file")) { partsAndFiles =>
               val rt: Try[Route] = for {
                 file <- optToTry(partsAndFiles.files.get("file"), s"File file missing")
               } yield {
                 implicit val vp: StringValueProvider = partsAndFiles.form
                 taskService.uploadFile(taskId = taskId, file = file)
               }
-              rt.fold[Route](t => reject(MalformedRequestContentRejection("Missing file.", t)), identity)
+                rt.fold[Route](t => reject(MalformedRequestContentRejection("Missing file.", t)), identity)
+              }
             }
           }
+        }~
+        path("findByStatus") {
+          get {
+            parameters("status".as[String]) { (status) =>
+              taskService.findTaskByStatus(status = status)
+            }
+          }
+        } ~
+        path("findByTags") {
+          get {
+            parameters("tags".as[String]) { (tags) =>
+              taskService.findTasksByTags(tags = tags)
+            }
+          }
+        }
       }
     }
+
+
 }
 
 

@@ -1,17 +1,11 @@
 package work.arudenko.kanban.backend.api
 
-import akka.actor.Status.Success
+import akka.http.scaladsl.marshalling.ToEntityMarshaller
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
-import akka.http.scaladsl.model.StatusCodes
-import akka.http.scaladsl.marshalling.ToEntityMarshaller
 import akka.http.scaladsl.unmarshalling.FromEntityUnmarshaller
-import akka.http.scaladsl.unmarshalling.FromStringUnmarshaller
-import work.arudenko.kanban.backend.model.{GeneralResult, Result, SuccessEmpty, SuccessEntity, User, SignUpInfo, UserInfo, UserUpdateInfo}
-import work.arudenko.kanban.backend.AkkaHttpHelper._
 import work.arudenko.kanban.backend.controller.Auth
-import java.time.OffsetDateTime
-import scala.util.{Failure, Try}
+import work.arudenko.kanban.backend.model._
 
 
 class UserApi(
@@ -19,68 +13,69 @@ class UserApi(
     userMarshaller: UserApiMarshaller
 ) extends GenericApi {
 
-
   import userMarshaller._
 
   lazy val route: Route =
-    path("user" / "me") {
-      authenticateOAuth2("Global", authenticator) {
-        implicit auth =>
-          put {
-            entity(as[UserUpdateInfo]) { user =>
-              userService.updateSelf(user = user)
-            }
-          } ~
-          delete {
-              userService.deleteUser(auth)
-          } ~
-          get {
-              userService.getCurrentUser(auth)
-          }~
-          path("logout") {
+    pathPrefix("user") {
+      pathPrefix("me") {
+        authenticateOAuth2("Global", authenticator) {
+          implicit auth =>
+            put {
+              entity(as[UserUpdateInfo]) { user =>
+                userService.updateSelf(user = user)
+              }
+            } ~
+            delete {
+                userService.deleteUser(auth)
+            } ~
             get {
-              userService.logoutUser(auth)
+                userService.getCurrentUser(auth)
+            } ~
+            path("logout") {
+                get {
+                  userService.logoutUser(auth)
+                }
             }
-          }
-      }
-    } ~
-    path("user" / "login") {
+        }
+      }~
+      pathPrefix( "login") {
         post {
-          entity(as[SignUpInfo]){ userInfo =>
+          entity(as[SignUpInfo]) { userInfo =>
             userService.loginUser(username = userInfo.email, password = userInfo.password)
           }
-        }~
-        path("reset"/ Segment) { resetToken =>
-          post {
-            entity(as[String]) { newPassword =>
-              userService.resetPassword(resetToken, newPassword)
+        } ~
+          path("reset" / Segment) { resetToken =>
+            post {
+              entity(as[String]) { newPassword =>
+                userService.resetPassword(resetToken, newPassword)
+              }
+            } ~
+              put {
+                userService.requestPasswordReset(resetToken)
+              }
+          } ~
+          path("activate" / Segment) { emailToken =>
+            post {
+              userService.activateAccount(emailToken)
             }
           } ~
-          put{
-            userService.requestPasswordReset(resetToken)
-          }
-        } ~
-        path("activate"/ Segment) { emailToken =>
+        path("register") {
           post {
-            userService.activateAccount(emailToken)
-          }
-        }
-        path("register"){
-          post {
-            entity(as[SignUpInfo]){ user =>
+            entity(as[SignUpInfo]) { user =>
               userService.createUser(user = user)
             }
           }
         }
-    }~
-    path("user" / "info"){
-      authenticateOAuth2("Global", authenticator) {
-        implicit auth =>
-          post {
-            entity(as[String]) { user =>
-              userService.getUserByEmail(username = user)
+      } ~
+      path("info") {
+        authenticateOAuth2("Global", authenticator) {
+          implicit auth =>
+            post {
+              entity(as[String]) { user =>
+                userService.getUserByEmail(username = user)
+              }
             }
-          }
+        }
       }
     }
 

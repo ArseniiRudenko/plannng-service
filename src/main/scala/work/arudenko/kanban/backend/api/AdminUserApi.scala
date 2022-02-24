@@ -16,9 +16,9 @@ class AdminUserApi(
 
 
   lazy val route:Route =
-    path( "admin" / "user") {
-    authenticateOAuth2("Global", adminAuthenticator) {
-      implicit auth =>
+    pathPrefix( "admin" / "user") {
+      authenticateOAuth2("Global", adminAuthenticator) {
+        implicit auth =>
           put {
             entity(as[User]) { user =>
               adminUserService.updateUser(user = user)
@@ -36,16 +36,16 @@ class AdminUserApi(
             entity(as[UserInfo]) { user =>
               adminUserService.getUser(knownInfo = user)
             }
-          }
-        path( "createWithArray") {
-          post {
-            entity(as[Seq[UserInfo]]) { user =>
-              adminUserService.createUsersWithArrayInput(user = user)
+          }~
+          path( "createWithArray") {
+            post {
+              entity(as[Seq[UserInfo]]) { user =>
+                adminUserService.createUsersWithArrayInput(user = user)
+              }
             }
           }
-        }
+      }
     }
-  }
 
 }
 

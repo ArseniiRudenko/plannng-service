@@ -56,9 +56,6 @@ class UserApiServiceImpl(implicit actorSystem: ActorSystem) extends UserApiServi
   }
 
 
-
-
-  //TODO: add separate get user for admins, that returns id
   /**
    * Code: 200, Message: successful operation, DataType: User
    * Code: 400, Message: Invalid message format, DataType: GeneralError
@@ -136,22 +133,7 @@ class UserApiServiceImpl(implicit actorSystem: ActorSystem) extends UserApiServi
         }
     }
 
-
-
-
-  def processUserUpdate(oldSet:User,newSet:UserUpdateInfo):Result[User] =
-    User.updateUser(oldSet,newSet) match {
-      case Some(value) => value match {
-        case 1=> SuccessEmpty
-        case 0=> NotFound
-        case e=>
-          logger.error(s"update user returned unexpected value $e from update operation for user $oldSet and update set of $newSet")
-          GeneralResult(500,"unexpected db error")
-      }
-      case None => WrongInput("incorrect values set for update")
-    }
-
-  override def resetPassword(resetToken: String, newPassword: String):Result[User] =
+  override def resetPassword(resetToken: String, newPassword: String):Result[Unit] =
     getUserFromToken(resetToken) match {
       case Some(value) =>
         val hash = Auth.hashPassword(newPassword)
@@ -165,7 +147,7 @@ class UserApiServiceImpl(implicit actorSystem: ActorSystem) extends UserApiServi
     }
 
 
-  override def activateAccount(emailToken: String):Result[User] = {
+  override def activateAccount(emailToken: String):Result[Unit] = {
     getUserFromToken(emailToken) match {
       case Some(value) => User.emailActivateAccount(value.id) match {
         case 1 => SuccessEmpty
@@ -178,7 +160,7 @@ class UserApiServiceImpl(implicit actorSystem: ActorSystem) extends UserApiServi
     }
   }
 
-  override def requestPasswordReset(email: String):Result[User]= {
+  override def requestPasswordReset(email: String):Result[Unit]= {
     scala.concurrent.Future {
       User.getLoginUser(email) match {
         case Some(value) =>
@@ -197,7 +179,7 @@ class UserApiServiceImpl(implicit actorSystem: ActorSystem) extends UserApiServi
     SuccessEntity(UserInfo(auth.user))
 
 
-  override def deleteUser(auth: Auth): Result[User] = {
+  override def deleteUser(auth: Auth): Result[Unit] = {
     User.delete(auth.user.id) match {
       case 0 => WrongInput("user already removed")
       case 1 => SuccessEmpty
@@ -207,14 +189,20 @@ class UserApiServiceImpl(implicit actorSystem: ActorSystem) extends UserApiServi
     }
   }
 
-  override def updateSelf(user: UserUpdateInfo)(implicit auth: Auth): Result[User] =
+  override def updateSelf(user: UserUpdateInfo)(implicit auth: Auth): Result[Unit] =
     if(auth.verifyPassword(user.password)) {
       val userWithPreparedValues = user.copy(newPassword = user.newPassword.map(Auth.hashPassword))
-      processUserUpdate(auth.user, userWithPreparedValues)
+      User.updateUser(auth.user,userWithPreparedValues) match {
+        case Some(value) => value match {
+          case 1=> SuccessEmpty
+          case 0=> NotFound
+          case e=>
+            logger.error(s"update user returned unexpected value $e from update operation for user ${auth.user} and update set of $userWithPreparedValues")
+            GeneralResult(500,"unexpected db error")
+        }
+        case None => WrongInput("incorrect values set for update")
+      }
     }else
       NotAuthorized
 
-  override def getUser(knownInfo: UserInfo): Result[Seq[User]] = ???
-
-  override def getUser(id: String): Result[User] = ???
 }
