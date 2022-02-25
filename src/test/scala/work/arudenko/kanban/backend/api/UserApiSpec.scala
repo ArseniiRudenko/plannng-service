@@ -130,7 +130,7 @@ class UserApiSpec extends AnyFlatSpec with should.Matchers {
   lazy val login: Future[(StatusCode, HttpEntity.Strict)] = {
     val  loginRequest=HttpRequest(
       method = HttpMethods.POST,
-      uri = "http://localhost:9000/user/login",
+      uri = "http://localhost:9000/login",
       entity = HttpEntity(ContentTypes.`application/json`, "{ \"email\":\"arsenii@test\", \"password\":\"test\"}")
     )
     Http().singleRequest(loginRequest).flatMap(res=>{

@@ -22,7 +22,6 @@ object Main {
     val adminUserApi = new AdminUserApi(AdminUserApiServiceImpl,AdminUserApiMarshallerImpl)
 
     val routes: Route = commentApi.route ~ taskApi.route ~ timeApi.route ~ userApi.route ~ userApi.loginRoute ~ adminUserApi.route
-    SqlContext.intSqlContext()
     Http().newServerAt("0.0.0.0", 9000).bindFlow(routes)
   }
 

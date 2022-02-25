@@ -87,7 +87,7 @@ object Task extends WithCommonSqlOperations[Task] {
       //insert tags into tag to issue table
       sql"insert into project_track.tag_to_issue (tag_id, issue_id) values ({tag}, {issue})"
         .batchByName(
-          task.tags.flatMap(tag => tag.id match {
+          task.tags.toSeq.flatMap(tag => tag.id match {
           case Some(value) => Seq(Seq("tag"->value,"issue"->id))
           case None => Nil
         }):_*)

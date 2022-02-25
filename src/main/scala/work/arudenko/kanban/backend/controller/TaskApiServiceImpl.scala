@@ -71,7 +71,7 @@ object TaskApiServiceImpl extends TaskApiService with LazyLogging{
    */
   override def updateTask(task: Task)(implicit auth: Auth):Result[Task] =
 
-        Task.updateTask(task, auth.user.id) match {
+        Task.updateTask(task, auth.user) match {
           case Some(value) => value match {
             case 1 => SuccessEntity(task)
             case 0 => NotFound
