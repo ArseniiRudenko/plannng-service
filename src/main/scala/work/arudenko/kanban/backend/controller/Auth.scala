@@ -71,7 +71,6 @@ object Auth{
   }
 
   def verifyPassword(password:String,storedPassword:String):Boolean = {
-    return true
     val creds = Credentials(Some(OAuth2BearerToken(password))).asInstanceOf[Credentials.Provided]
     val pos=storedPassword.lastIndexOf(":")
     val (secret, salt) = (storedPassword.take(pos), storedPassword.drop(pos+1))

@@ -15,50 +15,28 @@ class UserApi(
 
   import userMarshaller._
 
-  lazy val route: Route =
-    pathPrefix("user") {
-      pathPrefix("me") {
-        authenticateOAuth2("Global", authenticator) {
-          implicit auth =>
-            put {
-              entity(as[UserUpdateInfo]) { user =>
-                userService.updateSelf(user = user)
-              }
-            } ~
-            delete {
-                userService.deleteUser(auth)
-            } ~
-            get {
-                userService.getCurrentUser(auth)
-            } ~
-            path("logout") {
-                get {
-                  userService.logoutUser(auth)
-                }
-            }
+  lazy val loginRoute:Route =
+    pathPrefix( "login") {
+      post {
+        entity(as[SignUpInfo]) { userInfo =>
+          userService.loginUser(username = userInfo.email, password = userInfo.password)
         }
-      }~
-      pathPrefix( "login") {
-        post {
-          entity(as[SignUpInfo]) { userInfo =>
-            userService.loginUser(username = userInfo.email, password = userInfo.password)
+      } ~
+        path("reset" / Segment) { resetToken =>
+          post {
+            entity(as[String]) { newPassword =>
+              userService.resetPassword(resetToken, newPassword)
+            }
+          } ~
+            put {
+              userService.requestPasswordReset(resetToken)
+            }
+        } ~
+        path("activate" / Segment) { emailToken =>
+          post {
+            userService.activateAccount(emailToken)
           }
         } ~
-          path("reset" / Segment) { resetToken =>
-            post {
-              entity(as[String]) { newPassword =>
-                userService.resetPassword(resetToken, newPassword)
-              }
-            } ~
-              put {
-                userService.requestPasswordReset(resetToken)
-              }
-          } ~
-          path("activate" / Segment) { emailToken =>
-            post {
-              userService.activateAccount(emailToken)
-            }
-          } ~
         path("register") {
           post {
             entity(as[SignUpInfo]) { user =>
@@ -66,16 +44,38 @@ class UserApi(
             }
           }
         }
-      } ~
-      path("info") {
-        authenticateOAuth2("Global", authenticator) {
-          implicit auth =>
+    }
+
+
+  lazy val route: Route =
+    pathPrefix("user") {
+      authenticateOAuth2("Global", authenticator) {
+        implicit auth =>
+          pathEndOrSingleSlash {
+            put {
+              entity(as[UserUpdateInfo]) { user =>
+                userService.updateSelf(user = user)
+              }
+            } ~
+              delete {
+                userService.deleteUser(auth)
+              } ~
+              get {
+                userService.getCurrentUser(auth)
+              } ~
+              path("logout") {
+                get {
+                  userService.logoutUser(auth)
+                }
+              }
+          } ~
+          path("info") {
             post {
               entity(as[String]) { user =>
                 userService.getUserByEmail(username = user)
               }
             }
-        }
+          }
       }
     }
 

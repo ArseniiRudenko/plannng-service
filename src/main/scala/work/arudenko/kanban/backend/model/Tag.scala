@@ -28,10 +28,10 @@ object Tag extends WithCommonSqlOperations[Tag]{
       rs.stringOpt("description")
     )
 
-  def getTagsForIssue(issueId:Int): immutable.Seq[Tag] =
+  def getTagsForIssue(issueId:Int): Set[Tag] =
     getList(
       sql"select * from $table t join project_track.tag_to_issue b on t.id=b.tag_id where b.issue_id=$issueId"
-    )
+    ).toSet
 
   def getTagsByName(strMatch:String): immutable.Seq[Tag] =
     getList(sql"select * from $table where name ~ $strMatch")

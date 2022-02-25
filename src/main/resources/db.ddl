@@ -25,7 +25,7 @@ create table peoples
     is_admin          boolean                  default false not null,
     created_at        timestamp with time zone default now() not null,
     updated_at        timestamp with time zone default now() not null,
-    is_eamil_verified boolean                  default false not null
+    is_email_verified boolean                  default false not null
 );
 
 alter table peoples
@@ -82,7 +82,7 @@ create table project
             primary key,
     name        varchar not null,
     description varchar,
-    organizer   integer not null
+    owner       integer not null
         constraint project_peoples_id_fk
             references peoples
             on update cascade on delete restrict
@@ -231,16 +231,21 @@ create unique index project_id_uindex
 
 create table project_membership
 (
-    person  integer not null
+    person             integer               not null
         constraint project_membership_peoples_id_fk
             references peoples,
-    project integer not null
+    project            integer               not null
         constraint project_membership_project_id_fk
-            references project
+            references project,
+    can_manage_members boolean default false not null,
+    can_manage_tasks   boolean default false not null
 );
 
 alter table project_membership
     owner to postgres;
+
+create unique index project_membership_person_project_uindex
+    on project_membership (person, project);
 
 create view chlid_issue_count_per_status(parent, cur_status, count) as
 SELECT issues.parent,

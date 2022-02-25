@@ -33,7 +33,7 @@ class UserApiSpec extends AnyFlatSpec with should.Matchers {
     val userRes= login.flatMap(loginResult=> {
       val userRequest = HttpRequest(
         method = HttpMethods.GET,
-        uri = "http://localhost:9000/user/me/",
+        uri = "http://localhost:9000/user/",
         headers = Authorization.oauth2(loginResult._2.data.utf8String) :: Nil
       )
       Http().singleRequest(userRequest).flatMap(res=>{
@@ -52,7 +52,7 @@ class UserApiSpec extends AnyFlatSpec with should.Matchers {
       Source(Range(0,100000).map(i=>
         (HttpRequest(
           method = HttpMethods.GET,
-          uri = "http://localhost:9000/user/me/",
+          uri = "http://localhost:9000/user/",
           headers = Authorization.oauth2(loginResult._2.data.utf8String) :: Nil
         ),UUID.randomUUID())))
 
@@ -70,7 +70,7 @@ class UserApiSpec extends AnyFlatSpec with should.Matchers {
         }
         ) match {
           case Failure(exception) => fail(exception)
-          case Success(value) => println("finished sucessfully")
+          case Success(_) => println("finished sucessfully")
         }
       })
       Await.result(source2.via(flow).runWith(sink),Duration.Inf)
@@ -102,7 +102,7 @@ class UserApiSpec extends AnyFlatSpec with should.Matchers {
       }
       ) match {
         case Failure(exception) => fail(exception)
-        case Success(value) => println("finished sucessfully")
+        case Success(_) => println("finished sucessfully")
       }
     })
     Await.result(source2.via(flow).runWith(sink),Duration.Inf)

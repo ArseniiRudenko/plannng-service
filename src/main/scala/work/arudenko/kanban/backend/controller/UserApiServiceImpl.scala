@@ -40,6 +40,7 @@ class UserApiServiceImpl(implicit actorSystem: ActorSystem) extends UserApiServi
             Some(userWitPass.email),
             Some(userWitPass.password),
             userWitPass.phone,
+            Nil,
             false,
             false,
             false

@@ -29,8 +29,9 @@ final case class Task (
   deadline: Option[OffsetDateTime] = None,
   assigneeId: Option[Int] = None,
   estimatedTime: Option[Int] = None,
-  tags: Seq[Tag] = Nil,
-  status: Option[String] = None)
+  tags: Set[Tag] = Set.empty[Tag],
+  status: Option[String] = None,
+  project:Int)
 
 object Task extends WithCommonSqlOperations[Task] {
 
@@ -47,7 +48,8 @@ object Task extends WithCommonSqlOperations[Task] {
       rs.intOpt("assignee"),
       rs.getOpt[PGInterval]("estimated_time").map(_.getHours),
       Tag.getTagsForIssue(rs.int("id")),
-      Some(rs.string("cur_status"))
+      Some(rs.string("cur_status")),
+      rs.int("project")
     )
 
   def getByStatus(status:String): Seq[Task] =
@@ -69,7 +71,7 @@ object Task extends WithCommonSqlOperations[Task] {
   def addNew(task:Task,createdBy:Int): Option[Long] =Try(
     DB localTx { implicit session =>
       val id =
-        sql"""insert into $table (header,description,priority,parent,deadline,assignee,estimated_time,cur_status,created_by)
+        sql"""insert into $table (header,description,priority,parent,deadline,assignee,estimated_time,cur_status,created_by,project)
              values(${task.header},
                     ${task.description},
                     ${task.priority}::project_track.priority,
@@ -78,7 +80,8 @@ object Task extends WithCommonSqlOperations[Task] {
                     ${task.assigneeId},
                     ${task.estimatedTime},
                     ${task.status.getOrElse("backlog")}::project_track.status,
-                    ${createdBy})
+                    ${createdBy},
+                    ${task.project})
                     """
       .updateAndReturnGeneratedKey.apply()
       //insert tags into tag to issue table
@@ -94,9 +97,9 @@ object Task extends WithCommonSqlOperations[Task] {
 
 
   //TODO: allow updating header and description only by creator or admin
-  def updateTask(task:Task, updatedBy:Int): Option[Int] = {
+  def updateTask(task:Task, updatedBy:User): Option[Int] = {
     task.id.flatMap(id=>
-    Try(update(
+    Try(update(   //TODO:allow setting project only to projects that user is member of
       sql"""
         update $table
         set
@@ -108,7 +111,8 @@ object Task extends WithCommonSqlOperations[Task] {
              assignee=${task.assigneeId},
              estimated_time=${task.estimatedTime},
              cur_status=${task.status.getOrElse("backlog")}::project_track.status,
-             updated_by=${updatedBy}
+             updated_by=${updatedBy.id},
+             project=${task.project}
         where id=$id
          """)).toOptionLogErr
     )

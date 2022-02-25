@@ -5,7 +5,7 @@ import work.arudenko.kanban.backend.model.User.update
 import work.arudenko.kanban.backend.orm.SqlContext.TryLogged
 import work.arudenko.kanban.backend.orm.WithCommonSqlOperations
 
-import scala.collection.immutable
+import scala.collection.{immutable, mutable}
 import scala.util.Try
 
 /**
@@ -23,6 +23,7 @@ final case class User (
   email: Option[String],
   password: Option[String],
   phone: Option[String],
+  projects:Set[Int],
   enabled:Boolean,
   emailVerified:Boolean,
   admin:Boolean
@@ -75,6 +76,7 @@ object User extends WithCommonSqlOperations[User] {
       rs.stringOpt("email"),
       rs.stringOpt("password"),
       rs.stringOpt("phone"),
+      Project.getProjectListForUser(rs.int("id")),
       rs.boolean("is_enabled"),
       rs.boolean("is_email_verified"),
       rs.boolean("is_admin")

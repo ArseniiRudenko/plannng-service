@@ -35,22 +35,22 @@ class TaskApi(
               taskService.addTask(task = task)
             }
           } ~
-            put {
-              entity(as[Task]) { task =>
-                taskService.updateTask(task = task)
-              }
+          put {
+            entity(as[Task]) { task =>
+              taskService.updateTask(task = task)
             }
+          }
         }~
-        pathPrefix(IntNumber) { (taskId) =>
+        pathPrefix(IntNumber) { taskId =>
           pathEndOrSingleSlash {
             delete {
               taskService.deleteTask(taskId = taskId)
             } ~
-              get {
-                taskService.getTaskById(taskId = taskId)
-              }
+            get {
+              taskService.getTaskById(taskId = taskId)
+            }
           }~
-          path("status" / Segment) { (status) =>
+          path("status" / Segment) { status =>
             put {
               taskService.updateTaskStatus(taskId = taskId, status = status)
             }
@@ -70,15 +70,15 @@ class TaskApi(
           }
         }~
         path("findByStatus") {
-          get {
-            parameters("status".as[String]) { (status) =>
+          post {
+            entity(as[String]) { status =>
               taskService.findTaskByStatus(status = status)
             }
           }
         } ~
         path("findByTags") {
-          get {
-            parameters("tags".as[String]) { (tags) =>
+          post {
+            entity(as[String]) { tags =>
               taskService.findTasksByTags(tags = tags)
             }
           }
