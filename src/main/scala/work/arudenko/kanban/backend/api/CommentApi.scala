@@ -21,30 +21,37 @@ class CommentApi(
 
   override def route(implicit auth: Auth): Route =
     pathPrefix("comment") {
-      path("task" / IntNumber) { (taskId) =>
-        post {
-          entity(as[String]) { comment =>
-            commentService.addComment(taskId = taskId, comment = comment)
-          }
-        } ~
-        get {
-            commentService.getComments(taskId = taskId)
-        }
-      } ~
-      path(IntNumber) { (commentId) =>
-          delete {
-            commentService.deleteComment(commentId = commentId)
-          }~ get{
-            commentService.getComment(commentId)
-          }
-      } ~
-      pathEndOrSingleSlash {
-          put {
-            entity(as[Comment]) { comment =>
-              commentService.updateComment(comment = comment)
+      concat(
+        path("task" / IntNumber) { taskId =>
+          concat(
+            post {
+              entity(as[String]) { comment =>
+                commentService.addComment(taskId = taskId, comment = comment)
+              }
+            },
+            get {
+                commentService.getComments(taskId = taskId)
             }
-          }
-      }
+          )
+        },
+        path(IntNumber) { commentId =>
+            concat(
+              delete {
+                commentService.deleteComment(commentId = commentId)
+              },
+              get{
+                commentService.getComment(commentId)
+              }
+            )
+        },
+        pathEndOrSingleSlash {
+            put {
+              entity(as[Comment]) { comment =>
+                commentService.updateComment(comment = comment)
+              }
+            }
+        }
+      )
     }
 }
 

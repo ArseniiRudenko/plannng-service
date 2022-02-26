@@ -27,60 +27,68 @@ class TaskApi(
 
   override def route(implicit auth: Auth): Route =
     pathPrefix("task") {
-        pathEndOrSingleSlash{
-          post {
-            entity(as[Task]) { task =>
-              taskService.addTask(task = task)
-            }
-          } ~
-          put {
-            entity(as[Task]) { task =>
-              taskService.updateTask(task = task)
-            }
-          }
-        }~
-        pathPrefix(IntNumber) { taskId =>
-          pathEndOrSingleSlash {
-            delete {
-              taskService.deleteTask(taskId = taskId)
-            } ~
-            get {
-              taskService.getTaskById(taskId = taskId)
-            }
-          }~
-          path("status" / Segment) { status =>
-            put {
-              taskService.updateTaskStatus(taskId = taskId, status = status)
-            }
-          } ~
-          path("uploadImage") {
+        concat(
+          pathEndOrSingleSlash{
+            concat(
+              post {
+                entity(as[Task]) { task =>
+                  taskService.addTask(task = task)
+                }
+              },
+              put {
+                entity(as[Task]) { task =>
+                  taskService.updateTask(task = task)
+                }
+              }
+            )
+          },
+          pathPrefix(IntNumber) { taskId =>
+            concat(
+              pathEndOrSingleSlash {
+                concat(
+                  delete {
+                    taskService.deleteTask(taskId = taskId)
+                  },
+                  get {
+                    taskService.getTaskById(taskId = taskId)
+                  }
+                )
+              },
+              path("status" / Segment) { status =>
+                put {
+                  taskService.updateTaskStatus(taskId = taskId, status = status)
+                }
+              },
+              path("uploadImage") {
+                post {
+                  formAndFiles(FileField("file")) { partsAndFiles =>
+                  val rt: Try[Route] = for {
+                    file <- optToTry(partsAndFiles.files.get("file"), s"File file missing")
+                  } yield {
+                    implicit val vp: StringValueProvider = partsAndFiles.form
+                    taskService.uploadFile(taskId = taskId, file = file)
+                  }
+                    rt.fold[Route](t => reject(MalformedRequestContentRejection("Missing file.", t)), identity)
+                  }
+                }
+              }
+            )
+          },
+          path("findByStatus") {
             post {
-              formAndFiles(FileField("file")) { partsAndFiles =>
-              val rt: Try[Route] = for {
-                file <- optToTry(partsAndFiles.files.get("file"), s"File file missing")
-              } yield {
-                implicit val vp: StringValueProvider = partsAndFiles.form
-                taskService.uploadFile(taskId = taskId, file = file)
-              }
-                rt.fold[Route](t => reject(MalformedRequestContentRejection("Missing file.", t)), identity)
+              entity(as[String]) { status =>
+                taskService.findTaskByStatus(status = status)
               }
             }
-          }
-        }~
-        path("findByStatus") {
-          post {
-            entity(as[String]) { status =>
-              taskService.findTaskByStatus(status = status)
+          },
+          path("findByTags") {
+            post {
+              entity(as[String]) { tags =>
+                taskService.findTasksByTags(tags = tags)
+              }
             }
           }
-        } ~
-        path("findByTags") {
-          post {
-            entity(as[String]) { tags =>
-              taskService.findTasksByTags(tags = tags)
-            }
-          }
-      }
+        )
     }
 
 

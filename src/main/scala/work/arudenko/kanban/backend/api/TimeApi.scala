@@ -21,29 +21,35 @@ class TimeApi(
 
   override def route(implicit auth: Auth): Route =
     pathPrefix("time") {
-      path("task" / IntNumber) { (taskId) =>
-            post {
-              entity(as[Time]) { time =>
-                timeService.addTime(taskId = taskId, time = time)
-              }
-            } ~
-              put {
-                entity(as[Time]) { time =>
-                  timeService.updateTime(taskId = taskId, time = time)
+      concat(
+        path("task" / IntNumber) { (taskId) =>
+            concat(
+                post {
+                  entity(as[Time]) { time =>
+                    timeService.addTime(taskId = taskId, time = time)
+                  }
+                },
+                put {
+                  entity(as[Time]) { time =>
+                    timeService.updateTime(taskId = taskId, time = time)
+                  }
+                },
+                get {
+                  timeService.getTime(taskId = taskId)
                 }
-              } ~
-              get {
-                timeService.getTime(taskId = taskId)
-              }
-        }~
+            )
+        },
         path(IntNumber) { (recordId) =>
-              delete {
-                timeService.deleteTimeRecord(recordId = recordId)
-              } ~
-              get {
-                  timeService.getTimeRecordById(recordId = recordId)
-              }
+          concat(
+            delete {
+              timeService.deleteTimeRecord(recordId = recordId)
+            },
+            get {
+              timeService.getTimeRecordById(recordId = recordId)
+            }
+          )
         }
+      )
     }
 }
 

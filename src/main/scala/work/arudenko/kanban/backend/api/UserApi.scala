@@ -17,26 +17,31 @@ class UserApi(
 
   lazy val loginRoute:Route =
     pathPrefix( "login") {
-      post {
-        entity(as[SignUpInfo]) { userInfo =>
-          userService.loginUser(username = userInfo.email, password = userInfo.password)
-        }
-      } ~
-        path("reset" / Segment) { resetToken =>
+      concat(
+        pathEndOrSingleSlash {
           post {
-            entity(as[String]) { newPassword =>
-              userService.resetPassword(resetToken, newPassword)
+            entity(as[SignUpInfo]) { userInfo =>
+              userService.loginUser(username = userInfo.email, password = userInfo.password)
             }
-          } ~
+          }
+        },
+        path("reset" / Segment) { resetToken =>
+          concat(
+            post {
+              entity(as[String]) { newPassword =>
+                userService.resetPassword(resetToken, newPassword)
+              }
+            },
             put {
               userService.requestPasswordReset(resetToken)
             }
-        } ~
+          )
+        },
         path("activate" / Segment) { emailToken =>
           post {
             userService.activateAccount(emailToken)
           }
-        } ~
+        },
         path("register") {
           post {
             entity(as[SignUpInfo]) { user =>
@@ -44,36 +49,41 @@ class UserApi(
             }
           }
         }
+      )
     }
 
 
   override def route(implicit auth: Auth): Route =
     pathPrefix("user") {
-          pathEndOrSingleSlash {
-            put {
-              entity(as[UserUpdateInfo]) { user =>
-                userService.updateSelf(user = user)
+      concat(
+        pathEndOrSingleSlash {
+            concat(
+              put {
+                entity(as[UserUpdateInfo]) { user =>
+                  userService.updateSelf(user = user)
+                }
+              },
+              delete {
+                  userService.deleteUser(auth)
+              },
+              get {
+                  userService.getCurrentUser(auth)
               }
-            } ~
-            delete {
-                userService.deleteUser(auth)
-            } ~
-            get {
-                userService.getCurrentUser(auth)
-            }
-          } ~
-          path("logout") {
+            )
+        },
+        path("logout") {
               get {
                 userService.logoutUser(auth)
               }
-          }~
-          path("info") {
+        },
+        path("info") {
             post {
               entity(as[String]) { user =>
                 userService.getUserByEmail(username = user)
               }
             }
-          }
+        }
+      )
     }
 
 }

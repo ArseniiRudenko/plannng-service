@@ -17,31 +17,39 @@ class AdminUserApi(
 
   override def route(implicit auth: Auth): Route =
     pathPrefix( "admin" / "user") {
-          put {
-            entity(as[User]) { user =>
-              adminUserService.updateUser(user = user)
-            }
-          } ~
-          path(IntNumber){ id=>
+      concat(
+        pathEndOrSingleSlash {
+            concat(
+              put {
+                entity(as[User]) { user =>
+                  adminUserService.updateUser(user = user)
+                }
+              },
+              post {
+                entity(as[UserInfo]) { user =>
+                  adminUserService.getUser(knownInfo = user)
+                }
+              }
+            )
+        },
+        path(IntNumber) { id =>
+           concat(
             delete {
               adminUserService.deleteUser(id)
-            } ~
-            get{
+            },
+            get {
               adminUserService.getUser(id)
             }
-          }~
+           )
+        },
+        path( "createWithArray") {
           post {
-            entity(as[UserInfo]) { user =>
-              adminUserService.getUser(knownInfo = user)
-            }
-          }~
-          path( "createWithArray") {
-            post {
-              entity(as[Seq[UserInfo]]) { user =>
-                adminUserService.createUsersWithArrayInput(user = user)
-              }
+            entity(as[Seq[UserInfo]]) { user =>
+              adminUserService.createUsersWithArrayInput(user = user)
             }
           }
+        }
+      )
     }
 
 }

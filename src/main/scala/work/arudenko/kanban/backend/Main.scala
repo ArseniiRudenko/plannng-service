@@ -21,17 +21,23 @@ object Main extends GenericApi {
     val userApi = new UserApi(new UserApiServiceImpl,UserApiMarshallerImpl)
     val adminUserApi = new AdminUserApi(AdminUserApiServiceImpl,AdminUserApiMarshallerImpl)
 
-    val routes: Route =
-      userApi.loginRoute ~
-      authenticateOAuth2("Global", authenticator) {
-        implicit auth =>
-          commentApi.route ~
-            taskApi.route ~
-            timeApi.route ~
-            userApi.route
-      }~authenticateOAuth2("Global", adminAuthenticator) {
-        implicit auth => adminUserApi.route
-      }
+    val routes: Route = {
+      concat(
+        userApi.loginRoute,
+        authenticateOAuth2("Global", authenticator) {
+          implicit auth =>
+            concat(
+              commentApi.route,
+              taskApi.route,
+              timeApi.route,
+              userApi.route
+            )
+        },
+        authenticateOAuth2("Global", adminAuthenticator) {
+          implicit auth => adminUserApi.route
+        }
+      )
+    }
 
     Http().newServerAt("0.0.0.0", 9000).bindFlow(routes)
   }
