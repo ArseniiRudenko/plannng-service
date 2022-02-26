@@ -90,8 +90,7 @@ object Task extends WithCommonSqlOperations[Task] {
           task.tags.toSeq.flatMap(tag => tag.id match {
           case Some(value) => Seq(Seq("tag"->value,"issue"->id))
           case None => Nil
-        }):_*)
-        .apply()
+        }):_*).apply()
       id
     }).toOptionLogErr
 

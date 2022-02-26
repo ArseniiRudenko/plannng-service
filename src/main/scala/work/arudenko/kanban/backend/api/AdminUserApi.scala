@@ -10,15 +10,13 @@ import work.arudenko.kanban.backend.model.{Result, User, UserInfo}
 class AdminUserApi(
                     adminUserService: AdminUserApiService,
                     userMarshaller: AdminUserApiMarshaller
-                  )  extends GenericApi {
+                  )  extends AuthenticatedApi {
 
   import userMarshaller._
 
 
-  lazy val route:Route =
+  override def route(implicit auth: Auth): Route =
     pathPrefix( "admin" / "user") {
-      authenticateOAuth2("Global", adminAuthenticator) {
-        implicit auth =>
           put {
             entity(as[User]) { user =>
               adminUserService.updateUser(user = user)
@@ -44,7 +42,6 @@ class AdminUserApi(
               }
             }
           }
-      }
     }
 
 }

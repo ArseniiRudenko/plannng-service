@@ -14,16 +14,14 @@ import work.arudenko.kanban.backend.controller.Auth
 class TimeApi(
     timeService: TimeApiService,
     timeMarshaller: TimeApiMarshaller
-) extends GenericApi {
+) extends AuthenticatedApi {
 
   
   import timeMarshaller._
 
-  lazy val route: Route = {
+  override def route(implicit auth: Auth): Route =
     pathPrefix("time") {
       path("task" / IntNumber) { (taskId) =>
-        authenticateOAuth2("Global", authenticator) {
-          implicit auth =>
             post {
               entity(as[Time]) { time =>
                 timeService.addTime(taskId = taskId, time = time)
@@ -37,21 +35,16 @@ class TimeApi(
               get {
                 timeService.getTime(taskId = taskId)
               }
-        }
-      } ~
+        }~
         path(IntNumber) { (recordId) =>
-          authenticateOAuth2("Global", authenticator) {
-            implicit auth =>
               delete {
                 timeService.deleteTimeRecord(recordId = recordId)
               } ~
               get {
                   timeService.getTimeRecordById(recordId = recordId)
               }
-          }
         }
     }
-  }
 }
 
 

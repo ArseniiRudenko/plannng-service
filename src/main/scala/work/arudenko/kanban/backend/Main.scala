@@ -11,7 +11,7 @@ import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.Directives._
 import work.arudenko.kanban.backend.orm.SqlContext
 
-object Main {
+object Main extends GenericApi {
 
   def main(args:Array[String]): Unit ={
     implicit val actorSystem: ActorSystem = ActorSystem("BackendActorSystem")
@@ -21,7 +21,18 @@ object Main {
     val userApi = new UserApi(new UserApiServiceImpl,UserApiMarshallerImpl)
     val adminUserApi = new AdminUserApi(AdminUserApiServiceImpl,AdminUserApiMarshallerImpl)
 
-    val routes: Route = commentApi.route ~ taskApi.route ~ timeApi.route ~ userApi.route ~ userApi.loginRoute ~ adminUserApi.route
+    val routes: Route =
+      userApi.loginRoute ~
+      authenticateOAuth2("Global", authenticator) {
+        implicit auth =>
+          commentApi.route ~
+            taskApi.route ~
+            timeApi.route ~
+            userApi.route
+      }~authenticateOAuth2("Global", adminAuthenticator) {
+        implicit auth => adminUserApi.route
+      }
+
     Http().newServerAt("0.0.0.0", 9000).bindFlow(routes)
   }
 

@@ -14,50 +14,44 @@ import work.arudenko.kanban.backend.controller.Auth
 class CommentApi(
     commentService: CommentApiService,
     commentMarshaller: CommentApiMarshaller
-)extends GenericApi  {
+)extends AuthenticatedApi  {
 
   
   import commentMarshaller._
 
-  lazy val route: Route = {
+  override def route(implicit auth: Auth): Route =
     pathPrefix("comment") {
       path("task" / IntNumber) { (taskId) =>
-        authenticateOAuth2("Global", authenticator) {
-          implicit auth =>
-            post {
-              entity(as[String]) { comment =>
-                commentService.addComment(taskId = taskId, comment = comment)
-              }
-            } ~
-              get {
-                commentService.getComments(taskId = taskId)
-              }
+        post {
+          entity(as[String]) { comment =>
+            commentService.addComment(taskId = taskId, comment = comment)
+          }
+        } ~
+        get {
+            commentService.getComments(taskId = taskId)
         }
       } ~
       path(IntNumber) { (commentId) =>
-          authenticateOAuth2("Global", authenticator) {
-            implicit auth =>
-              delete {
-                commentService.deleteComment(commentId = commentId)
-              }
+          delete {
+            commentService.deleteComment(commentId = commentId)
+          }~ get{
+            commentService.getComment(commentId)
           }
       } ~
-      pathEndOrSingleSlash{
-          authenticateOAuth2("Global", authenticator) {
-            implicit auth =>
-              put {
-                entity(as[Comment]) { comment =>
-                  commentService.updateComment(comment = comment)
-                }
-              }
+      pathEndOrSingleSlash {
+          put {
+            entity(as[Comment]) { comment =>
+              commentService.updateComment(comment = comment)
+            }
           }
       }
     }
-  }
 }
 
 
 trait CommentApiService {
+
+  def getComment(commentId: Int)(implicit auth: Auth): Result[Comment]
 
   /**
    * Code: 200, Message: successful operation, DataType: Comment

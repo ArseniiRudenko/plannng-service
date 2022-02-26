@@ -11,7 +11,7 @@ import work.arudenko.kanban.backend.model._
 class UserApi(
     userService: UserApiService,
     userMarshaller: UserApiMarshaller
-) extends GenericApi {
+) extends AuthenticatedApi {
 
   import userMarshaller._
 
@@ -47,28 +47,26 @@ class UserApi(
     }
 
 
-  lazy val route: Route =
+  override def route(implicit auth: Auth): Route =
     pathPrefix("user") {
-      authenticateOAuth2("Global", authenticator) {
-        implicit auth =>
           pathEndOrSingleSlash {
             put {
               entity(as[UserUpdateInfo]) { user =>
                 userService.updateSelf(user = user)
               }
             } ~
-              delete {
+            delete {
                 userService.deleteUser(auth)
-              } ~
-              get {
+            } ~
+            get {
                 userService.getCurrentUser(auth)
-              } ~
-              path("logout") {
-                get {
-                  userService.logoutUser(auth)
-                }
-              }
+            }
           } ~
+          path("logout") {
+              get {
+                userService.logoutUser(auth)
+              }
+          }~
           path("info") {
             post {
               entity(as[String]) { user =>
@@ -76,7 +74,6 @@ class UserApi(
               }
             }
           }
-      }
     }
 
 }

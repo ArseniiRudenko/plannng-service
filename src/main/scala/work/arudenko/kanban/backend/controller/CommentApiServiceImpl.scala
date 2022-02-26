@@ -60,4 +60,10 @@ object CommentApiServiceImpl extends CommentApiService  with LazyLogging{
         }else{
             NotAuthorized
         }
+
+  override def getComment(commentId: Int)(implicit auth: Auth): Result[Comment] =
+    Comment.get(commentId) match {
+      case Some(value) => SuccessEntity(value)
+      case None => NotFound
+    }
 }

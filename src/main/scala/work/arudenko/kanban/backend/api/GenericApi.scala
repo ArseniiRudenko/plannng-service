@@ -15,7 +15,6 @@ import work.arudenko.kanban.backend.serialization.binary.UserApiMarshallerImpl.{
 trait GenericApi {
 
 
-
   val authenticator:Authenticator[Auth] = {
     case Credentials.Missing => None
     case p:Credentials.Provided =>

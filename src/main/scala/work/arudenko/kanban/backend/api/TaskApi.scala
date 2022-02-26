@@ -20,15 +20,13 @@ import work.arudenko.kanban.backend.model.{GeneralResult, Result, Task, Time}
 class TaskApi(
     taskService: TaskApiService,
     taskMarshaller: TaskApiMarshaller
-)  extends MultipartDirectives with StringDirectives with GenericApi {
+)  extends MultipartDirectives with StringDirectives with AuthenticatedApi {
 
   
   import taskMarshaller._
 
-  lazy val route: Route =
+  override def route(implicit auth: Auth): Route =
     pathPrefix("task") {
-      authenticateOAuth2("Global", authenticator) {
-        implicit auth =>
         pathEndOrSingleSlash{
           post {
             entity(as[Task]) { task =>
@@ -82,7 +80,6 @@ class TaskApi(
               taskService.findTasksByTags(tags = tags)
             }
           }
-        }
       }
     }
 
