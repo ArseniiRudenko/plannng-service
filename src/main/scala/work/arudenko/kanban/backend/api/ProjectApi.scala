@@ -4,7 +4,7 @@ import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.unmarshalling.FromEntityUnmarshaller
 import work.arudenko.kanban.backend.controller.Auth
-import work.arudenko.kanban.backend.model.{Project, ProjectCreationInfo, Result}
+import work.arudenko.kanban.backend.model.{Membership, MembershipInfo, Project, ProjectCreationInfo, Result, UserInfo}
 
 class ProjectApi (
                    projectService: ProjectApiService,
@@ -48,16 +48,24 @@ class ProjectApi (
             path("members"){
               concat(
                 get{ //get member list
-                  ???
+                  projectService.getMembers(projectNumber)
                 },
-                post{ //add memeber
-                  ???
+                post{
+                  entity(as[Membership]) { membership=>
+                    //add memeber
+                    projectService.inviteMember(projectNumber,membership)
+                  }
                 },
-                put{ //change member permissions
-                  ???
+                put{
+                  entity(as[Membership]) { membership=>
+                    projectService.updateMember(projectNumber,membership)
+                    //change member permissions
+                  }
                 },
                 delete{ //delete member
-                  ???
+                  entity(as[Int]){ userId=>
+                    projectService.deleteMember(projectNumber,userId)
+                  }
                 }
               )
             }
@@ -70,6 +78,14 @@ class ProjectApi (
 }
 
 trait ProjectApiService{
+  def deleteMember(projectNumber: Int, userId: Int)(implicit user:Auth): Result[Unit]
+
+  def updateMember(projectNumber: Int, membership: Membership)(implicit user:Auth): Result[Unit]
+
+  def inviteMember(projectNumber: Int, membership: Membership)(implicit user:Auth): Result[Unit]
+
+  def getMembers(projectNumber: Int)(implicit user:Auth): Result[MembershipInfo]
+
   def deleteProject(projectNumber: Int)(implicit user:Auth): Result[Unit]
 
   def getProject(projectNumber: Int)(implicit user:Auth): Result[Project]
@@ -84,10 +100,17 @@ trait ProjectApiService{
 }
 
 trait ProjectApiMarshaller{
+  implicit def fromEntityUnmarshallerInt: FromEntityUnmarshaller[Int]
 
   implicit def fromEntityUnmarshallerProject: FromEntityUnmarshaller[Project]
+
+  implicit def fromEntityUnmarshallerMembership: FromEntityUnmarshaller[Membership]
+
   implicit def fromEntityUnmarshallerProjectCreationInfo: FromEntityUnmarshaller[ProjectCreationInfo]
 
   implicit def toEntityMarshallerProject: ToEntityMarshaller[Project]
+
+  implicit def toEntityMarshallerMembershipInfo: ToEntityMarshaller[MembershipInfo]
+
   implicit def toEntityMarshallerProjectSeq: ToEntityMarshaller[Seq[Project]]
 }

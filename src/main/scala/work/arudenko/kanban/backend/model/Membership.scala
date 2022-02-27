@@ -5,6 +5,7 @@ import work.arudenko.kanban.backend.orm.WithCommonSqlOperations
 
 final case class Membership(projectId:Int,memberId:Int,canManageMembers:Boolean,canManageTasks:Boolean)
 
+final case class MembershipInfo(projectId:Int,member:User,canManageMembers:Boolean,canManageTasks:Boolean)
 
 object Membership  extends WithCommonSqlOperations[Membership] {
   override val tableName = "project_track.project_membership"
