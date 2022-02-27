@@ -76,7 +76,7 @@ object User extends WithCommonSqlOperations[User] {
       rs.stringOpt("email"),
       rs.stringOpt("password"),
       rs.stringOpt("phone"),
-      Project.getProjectListForUser(rs.int("id")),
+      Membership.getProjectListForUser(rs.int("id")),
       rs.boolean("is_enabled"),
       rs.boolean("is_email_verified"),
       rs.boolean("is_admin")

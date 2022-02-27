@@ -82,6 +82,11 @@ class UserApi(
                 userService.getUserByEmail(username = user)
               }
             }
+        },
+        path(IntNumber){ id=>
+          get {
+            userService.getUser(id)
+          }
         }
       )
     }
@@ -91,6 +96,7 @@ class UserApi(
 
 trait UserApiService {
 
+  def getUser(id: Int): Result[UserInfo]
   /**
    * Code: 200, Message: Success
    * Code: 400, Message: Invalid message format, DataType: GeneralError

@@ -1,8 +1,10 @@
 package work.arudenko.kanban.backend.api
+import akka.http.scaladsl.marshalling.ToEntityMarshaller
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
+import akka.http.scaladsl.unmarshalling.FromEntityUnmarshaller
 import work.arudenko.kanban.backend.controller.Auth
-import work.arudenko.kanban.backend.model.{Project, ProjectCreationInfo}
+import work.arudenko.kanban.backend.model.{Project, ProjectCreationInfo, Result}
 
 class ProjectApi (
                    projectService: ProjectApiService,
@@ -18,16 +20,16 @@ class ProjectApi (
           concat(
              post {//create project
                entity(as[ProjectCreationInfo]) { project=>
-                 ???
+                 projectService.createProject(project)
                }
              },
              put { //update project
                entity(as[Project]) { project =>
-                  ???
+                  projectService.updateProject(project)
                }
              },
              get{ //get list of all your projects
-                 ???
+                 projectService.getProjectList
              }
            )
         },
@@ -36,10 +38,10 @@ class ProjectApi (
             pathEndOrSingleSlash{
              concat(
                get{
-                 ???
+                 projectService.getProject(projectNumber)
                },
                delete{
-                 ???
+                 projectService.deleteProject(projectNumber)
                }
              )
             },
@@ -67,10 +69,25 @@ class ProjectApi (
 
 }
 
-trait ProjectApiService
+trait ProjectApiService{
+  def deleteProject(projectNumber: Int)(implicit user:Auth): Result[Unit]
+
+  def getProject(projectNumber: Int)(implicit user:Auth): Result[Project]
+
+  def getProjectList(implicit user:Auth): Result[Seq[Project]]
+
+  def updateProject(project: Project)(implicit user:Auth): Result[Unit]
+
+  def createProject(project: ProjectCreationInfo)(implicit user:Auth): Result[Project]
+
+
+}
 
 trait ProjectApiMarshaller{
 
+  implicit def fromEntityUnmarshallerProject: FromEntityUnmarshaller[Project]
+  implicit def fromEntityUnmarshallerProjectCreationInfo: FromEntityUnmarshaller[ProjectCreationInfo]
 
-
+  implicit def toEntityMarshallerProject: ToEntityMarshaller[Project]
+  implicit def toEntityMarshallerProjectSeq: ToEntityMarshaller[Seq[Project]]
 }

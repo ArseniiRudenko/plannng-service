@@ -19,14 +19,7 @@ object Project  extends WithCommonSqlOperations[Project] {
     rs.int("owner")
   )
 
-  def getProjectListForUser(userId:Int):Set[Int] =
-      DB readOnly { implicit session =>
-        sql"select * from project_track.project_membership where person=${userId}"
-          .map(rs => rs.int("project"))
-          .iterable
-          .apply()
-          .toSet
-      }
+
 
 
 
