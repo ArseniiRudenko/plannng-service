@@ -4,6 +4,7 @@ import scalikejdbc.WrappedResultSet
 import work.arudenko.kanban.backend.orm.WithCommonSqlOperations
 import scalikejdbc._
 
+final case class ProjectCreationInfo(name:String, description:Option[String])
 
 final case class Project(id:Int,name:String, description:Option[String],owner:Int)
 

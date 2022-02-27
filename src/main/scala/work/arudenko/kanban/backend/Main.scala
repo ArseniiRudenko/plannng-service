@@ -5,11 +5,8 @@ import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.Route
 import work.arudenko.kanban.backend.api._
 import work.arudenko.kanban.backend.controller._
-import work.arudenko.kanban.backend.serialization._
 import work.arudenko.kanban.backend.serialization.shitty._
-import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.Directives._
-import work.arudenko.kanban.backend.orm.SqlContext
 
 object Main extends GenericApi {
 
@@ -20,6 +17,8 @@ object Main extends GenericApi {
     val timeApi = new TimeApi(TimeApiServiceImpl,TimeApiMarshallerImpl)
     val userApi = new UserApi(new UserApiServiceImpl,UserApiMarshallerImpl)
     val adminUserApi = new AdminUserApi(AdminUserApiServiceImpl,AdminUserApiMarshallerImpl)
+    val projectApi = new ProjectApi(ProjectApiServiceImpl,ProjectApiMarshallerImpl)
+
 
     val routes: Route = {
       concat(
@@ -30,7 +29,8 @@ object Main extends GenericApi {
               commentApi.route,
               taskApi.route,
               timeApi.route,
-              userApi.route
+              userApi.route,
+              projectApi.route
             )
         },
         authenticateOAuth2("Global", adminAuthenticator) {

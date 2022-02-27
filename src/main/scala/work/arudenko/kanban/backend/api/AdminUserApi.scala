@@ -19,28 +19,28 @@ class AdminUserApi(
     pathPrefix( "admin" / "user") {
       concat(
         pathEndOrSingleSlash {
-            concat(
-              put {
-                entity(as[User]) { user =>
-                  adminUserService.updateUser(user = user)
-                }
-              },
-              post {
-                entity(as[UserInfo]) { user =>
-                  adminUserService.getUser(knownInfo = user)
-                }
+          concat(
+            put {
+              entity(as[User]) { user =>
+                adminUserService.updateUser(user = user)
               }
-            )
+            },
+            post {
+              entity(as[UserInfo]) { user =>
+                adminUserService.getUser(knownInfo = user)
+              }
+            }
+          )
         },
         path(IntNumber) { id =>
-           concat(
+          concat(
             delete {
               adminUserService.deleteUser(id)
             },
             get {
               adminUserService.getUser(id)
             }
-           )
+          )
         },
         path( "createWithArray") {
           post {
