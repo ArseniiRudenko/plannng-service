@@ -98,7 +98,7 @@ trait ProjectApiService{
 
   def inviteMember(membership: Membership)(implicit user:Auth): Result[Unit]
 
-  def getMembers(projectNumber: Int)(implicit user:Auth): Result[MembershipInfo]
+  def getMembers(projectNumber: Int)(implicit user:Auth): Result[Seq[MembershipInfo]]
 
   def deleteProject(projectNumber: Int)(implicit user:Auth): Result[Unit]
 
@@ -125,6 +125,8 @@ trait ProjectApiMarshaller{
   implicit def toEntityMarshallerProject: ToEntityMarshaller[Project]
 
   implicit def toEntityMarshallerMembershipInfo: ToEntityMarshaller[MembershipInfo]
+
+  implicit def toEntityMarshallerMembershipInfoSeq: ToEntityMarshaller[Seq[MembershipInfo]]
 
   implicit def toEntityMarshallerProjectSeq: ToEntityMarshaller[Seq[Project]]
 }

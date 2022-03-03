@@ -63,8 +63,15 @@ class UserApiServiceImpl(implicit actorSystem: ActorSystem) extends UserApiServi
    * Code: 404, Message: User not found
    */
   override def getUserByEmail(username: String)(implicit auth: Auth):Result[UserInfo] =
-    User.getUser(username) match { //TODO: think of a way to limit this to subset of users(that current user already 'knows').
-      case Some(value) => SuccessEntity(UserInfo(value))
+    User.getUser(username) match {
+      case Some(value) =>{
+        val ids = auth.user.projects.map(_.projectId)
+        val shareProject = value.projects.map(_.projectId).exists(id=>ids.contains(id))
+        if(shareProject)
+            SuccessEntity(UserInfo(value))
+        else
+            NotAuthorized //TODO: return not found?
+      }
       case None => NotFound
     }
 

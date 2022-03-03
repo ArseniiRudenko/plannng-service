@@ -36,10 +36,43 @@ object Membership  extends WithCommonSqlOperations[Membership] {
 
   override val tableName = "project_track.project_membership"
 
-  override def sqlExtractor(rs: WrappedResultSet): Membership = ???
+  override def sqlExtractor(rs: WrappedResultSet): Membership =
+    new Membership(
+    rs.int("project"),
+    rs.int("person"),
+    rs.boolean("can_manage_members"),
+    rs.boolean("can_manage_tasks")
+  )
+
+
+  def infoSqlExtractor(rs: WrappedResultSet): MembershipInfo = new MembershipInfo(
+    rs.int("project"),
+    User.sqlExtractor(rs),
+    rs.boolean("can_manage_members"),
+    rs.boolean("can_manage_tasks")
+  )
 
   def delete(projectNumber: Int, userId: Int): Int =
     update(sql" delete from $table where project=$projectNumber and person=$userId")
+
+
+
+  def getProjectInfoListForUser(userId:Int):Set[MembershipInfo] =
+    DB readOnly { implicit session =>
+      sql"select * from $table join ${User.table} on $table.person=${User.table}.id where person=$userId"
+        .map(rs => infoSqlExtractor(rs))
+        .iterable
+        .apply()
+        .toSet
+    }
+
+  def getProjectInfoListForProject(projectId:Int):Seq[MembershipInfo] =
+    DB readOnly { implicit session =>
+      sql"select * from $table join ${User.table} on $table.person=${User.table}.id where project=$projectId"
+        .map(rs => infoSqlExtractor(rs))
+        .list
+        .apply()
+    }
 
 
   def getProjectListForUser(userId:Int):Set[Membership] =
