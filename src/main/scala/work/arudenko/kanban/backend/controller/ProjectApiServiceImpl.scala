@@ -18,9 +18,21 @@ object ProjectApiServiceImpl extends ProjectApiService with LazyLogging{
 
   override def updateMember(membership: Membership)(implicit user: Auth): Result[Unit] = ???
 
+
+
   override def inviteMember(membership: Membership)(implicit auth: Auth): Result[Unit] = {
     auth.user.projects.find(p => p.projectId == membership.projectId && p.canManageMembers) match {
       case Some(value) => Membership.invite(membership) match {
+        case 0 => NotFound
+        case 1 => SuccessEmpty
+      }
+      case None => NotAuthorized
+    }
+  }
+
+  override def requestAccess(projectNumber: Int)(implicit auth: Auth): Result[Unit] = {
+    auth.user.projects.find(p => p.projectId == projectNumber && p.canManageMembers) match {
+      case Some(value) => Membership.request(auth.user.id,projectNumber) match {
         case 0 => NotFound
         case 1 => SuccessEmpty
       }
@@ -40,7 +52,7 @@ object ProjectApiServiceImpl extends ProjectApiService with LazyLogging{
 
   override def createProject(project: ProjectCreationInfo)(implicit user: Auth): Result[Project] = ???
 
-  override def requestAccess(projectNumber: Int)(implicit user: Auth): Result[Unit] = ???
+
 
   override def rejectAccess(projectNumber: Int)(implicit user: Auth): Result[Unit] = ???
 }
