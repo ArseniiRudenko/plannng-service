@@ -23,7 +23,7 @@ final case class User (
   email: Option[String],
   password: Option[String],
   phone: Option[String],
-  projects:Set[Int],
+  projects:Set[Membership],
   enabled:Boolean,
   emailVerified:Boolean,
   admin:Boolean

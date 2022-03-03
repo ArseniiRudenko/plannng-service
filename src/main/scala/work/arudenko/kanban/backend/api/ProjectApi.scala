@@ -33,6 +33,23 @@ class ProjectApi (
              }
            )
         },
+        path("member"){
+          entity(as[Membership]) { membership =>
+            concat(
+              post {
+                  //add memeber
+                  projectService.inviteMember(membership)
+              },
+              put {
+                  //change member permissions
+                  projectService.updateMember(membership)
+              },
+              delete {
+                  projectService.deleteMember(membership)
+              }
+            )
+          }
+        },
         pathPrefix(IntNumber){ projectNumber=>
           concat(
             pathEndOrSingleSlash{
@@ -45,27 +62,20 @@ class ProjectApi (
                }
              )
             },
+            path("apply"){
+              concat(
+                post{//accept invite or request access to project
+                  projectService.requestAccess(projectNumber)
+                },
+                delete{ //reject invite or cancel request
+                  projectService.rejectAccess(projectNumber)
+                }
+              )
+            },
             path("members"){
               concat(
                 get{ //get member list
                   projectService.getMembers(projectNumber)
-                },
-                post{
-                  entity(as[Membership]) { membership=>
-                    //add memeber
-                    projectService.inviteMember(projectNumber,membership)
-                  }
-                },
-                put{
-                  entity(as[Membership]) { membership=>
-                    projectService.updateMember(projectNumber,membership)
-                    //change member permissions
-                  }
-                },
-                delete{ //delete member
-                  entity(as[Int]){ userId=>
-                    projectService.deleteMember(projectNumber,userId)
-                  }
                 }
               )
             }
@@ -78,11 +88,15 @@ class ProjectApi (
 }
 
 trait ProjectApiService{
-  def deleteMember(projectNumber: Int, userId: Int)(implicit user:Auth): Result[Unit]
+  def requestAccess(projectNumber: Int)(implicit user:Auth): Result[Unit]
 
-  def updateMember(projectNumber: Int, membership: Membership)(implicit user:Auth): Result[Unit]
+  def rejectAccess(projectNumber: Int)(implicit user:Auth): Result[Unit]
 
-  def inviteMember(projectNumber: Int, membership: Membership)(implicit user:Auth): Result[Unit]
+  def deleteMember(membership: Membership)(implicit user:Auth): Result[Unit]
+
+  def updateMember(membership: Membership)(implicit user:Auth): Result[Unit]
+
+  def inviteMember(membership: Membership)(implicit user:Auth): Result[Unit]
 
   def getMembers(projectNumber: Int)(implicit user:Auth): Result[MembershipInfo]
 
