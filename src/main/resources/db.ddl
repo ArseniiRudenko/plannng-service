@@ -3,6 +3,11 @@ create sequence issue_status_id_seq
 
 alter sequence issue_status_id_seq owner to postgres;
 
+create sequence project_id_seq
+    as integer;
+
+alter sequence project_id_seq owner to postgres;
+
 create type status as enum ('backlog', 'planned', 'in progress', 'in testing', 'closed');
 
 alter type status owner to postgres;
@@ -75,21 +80,23 @@ create unique index tags_id_uindex
 create unique index tags_name_uindex
     on tags (name);
 
-create table project
+create table projects
 (
-    id          serial
+    id          integer default nextval('project_track.project_id_seq'::regclass) not null
         constraint project_pk
             primary key,
-    name        varchar not null,
+    name        varchar                                                           not null,
     description varchar,
-    owner       integer not null
+    owner       integer                                                           not null
         constraint project_peoples_id_fk
             references peoples
             on update cascade on delete restrict
 );
 
-alter table project
+alter table projects
     owner to postgres;
+
+alter sequence project_id_seq owned by projects.id;
 
 create table issues
 (
@@ -121,7 +128,7 @@ create table issues
             references peoples,
     project        integer                                                          not null
         constraint issues_project_id_fk
-            references project
+            references projects
 );
 
 alter table issues
@@ -227,7 +234,7 @@ create unique index tag_to_issue_tag_id_issue_id_uindex
     on tag_to_issue (tag_id, issue_id);
 
 create unique index project_id_uindex
-    on project (id);
+    on projects (id);
 
 create table project_membership
 (
@@ -236,9 +243,11 @@ create table project_membership
             references peoples,
     project            integer               not null
         constraint project_membership_project_id_fk
-            references project,
+            references projects,
     can_manage_members boolean default false not null,
-    can_manage_tasks   boolean default false not null
+    can_manage_tasks   boolean default false not null,
+    is_accepted        boolean default false not null,
+    is_granted         boolean default false not null
 );
 
 alter table project_membership
@@ -246,6 +255,9 @@ alter table project_membership
 
 create unique index project_membership_person_project_uindex
     on project_membership (person, project);
+
+create index project_membership_person_index
+    on project_membership (person);
 
 create view chlid_issue_count_per_status(parent, cur_status, count) as
 SELECT issues.parent,
@@ -513,8 +525,8 @@ as
 $$
 BEGIN
     INSERT INTO
-        project_track.project_membership(person, project)
-    VALUES(new.organizer,new.id);
+        project_track.project_membership(person, project,can_manage_tasks,can_manage_members,is_accepted,is_granted)
+    VALUES(new.owner,new.id,true,true,true,true);
     return new;
 END;
 $$;
@@ -523,7 +535,7 @@ alter function function_add_member_on_create() owner to postgres;
 
 create trigger add_membership
     after insert
-    on project
+    on projects
     for each row
 execute procedure function_add_member_on_create();
 
