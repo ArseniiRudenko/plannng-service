@@ -11,8 +11,6 @@ object ProjectApiServiceImpl extends ProjectApiService with LazyLogging{
     case 1 => SuccessEmpty
   }
 
-  private def wrap[T]:T=>Result[T] = r=> SuccessEntity(r)
-
   private def processMemershipRequest[T,R](
                                             projectId:Int,
                                             modelChange:()=>T,
@@ -55,14 +53,16 @@ object ProjectApiServiceImpl extends ProjectApiService with LazyLogging{
     processMemershipRequest(
       projectNumber,
       ()=>Membership.getProjectInfoListForProject(projectNumber),
-      wrap[Seq[MembershipInfo]]
+      SuccessEntity[Seq[MembershipInfo]]
     )
+
 
   override def deleteProject(projectNumber: Int)(implicit user: Auth): Result[Unit] = ???
 
   override def getProject(projectNumber: Int)(implicit user: Auth): Result[Project] = ???
 
-  override def getProjectList(implicit user: Auth): Result[Seq[Project]] = ???
+  override def getProjectList(implicit auth: Auth): Result[Seq[Project]] =
+    SuccessEntity(Project.getProjectList(auth.user.projects.map(_.projectId).toSeq))
 
   override def updateProject(project: Project)(implicit user: Auth): Result[Unit] = ???
 

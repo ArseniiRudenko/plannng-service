@@ -96,7 +96,7 @@ class UserApi(
 
 trait UserApiService {
 
-  def getUser(id: Int): Result[UserInfo]
+  def getUser(id: Int)(implicit auth: Auth): Result[UserInfo]
   /**
    * Code: 200, Message: Success
    * Code: 400, Message: Invalid message format, DataType: GeneralError

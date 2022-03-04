@@ -19,8 +19,7 @@ object Project  extends WithCommonSqlOperations[Project] {
     rs.int("owner")
   )
 
-
-
+  def getProjectList(ids:Seq[Int]): Seq[Project] = getList(sql"select * from  $table where id in ($ids)")
 
 
 }

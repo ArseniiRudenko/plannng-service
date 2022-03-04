@@ -1,10 +1,10 @@
 package work.arudenko.kanban.backend.controller
 
-import akka.actor.ActorSystem
+import akka.actor.{ActorSystem, actorRef2Scala}
 import com.redis.api.StringApi.Always
 import com.typesafe.scalalogging.LazyLogging
 import work.arudenko.kanban.backend.api.UserApiService
-import work.arudenko.kanban.backend.model.{GeneralResult, NotAuthorized, NotFound, Result, SuccessEmpty, SuccessEntity, User, SignUpInfo, UserInfo, UserUpdateInfo, WrongInput}
+import work.arudenko.kanban.backend.model.{GeneralResult, NotAuthorized, NotFound, Result, SignUpInfo, SuccessEmpty, SuccessEntity, User, UserInfo, UserUpdateInfo, WrongInput}
 import work.arudenko.kanban.backend.serialization.binary.UserApiMarshallerImpl.{userParser, userSerializer}
 import work.arudenko.kanban.backend.services.EmailService
 
@@ -212,5 +212,20 @@ class UserApiServiceImpl(implicit actorSystem: ActorSystem) extends UserApiServi
       }
     }else
       NotAuthorized
+
+  override def getUser(id: Int)(implicit auth: Auth): Result[UserInfo] = {
+    User.get(id) match {
+      case Some(value) =>
+        lazy val membership = value.projects.map(_.projectId)
+        //only return user info if users have common project or requesting user is admin
+        val allow = auth.user.admin || auth.user.projects.map(_.projectId).exists(p=>membership.contains(p))
+        if(allow)
+          SuccessEntity(UserInfo(value))
+        else
+            NotAuthorized
+      case None => NotFound
+    }
+
+  }
 
 }

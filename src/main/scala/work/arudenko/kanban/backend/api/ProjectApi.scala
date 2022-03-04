@@ -38,6 +38,7 @@ class ProjectApi (
             concat(
               post {
                   //add memeber
+                //TODO: allow inviting users by email
                   projectService.inviteMember(membership)
               },
               put {
