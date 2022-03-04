@@ -30,8 +30,13 @@ object ProjectApiServiceImpl extends ProjectApiService with LazyLogging{
     )
   }
 
-  override def updateMember(membership: Membership)(implicit user: Auth): Result[Unit] = ???
-
+  override def updateMember(membership: Membership)(implicit user: Auth): Result[Unit] ={
+    processMemershipRequest(
+      membership.projectId,
+      ()=>Membership.updateMember(membership),
+      intToResult
+    )
+  }
 
   override def inviteMember(membership: Membership)(implicit auth: Auth): Result[Unit] = {
     processMemershipRequest(

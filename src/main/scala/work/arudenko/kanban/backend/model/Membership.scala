@@ -8,6 +8,17 @@ final case class Membership(projectId:Int,memberId:Int,canManageMembers:Boolean,
 final case class MembershipInfo(projectId:Int,member:User,canManageMembers:Boolean,canManageTasks:Boolean)
 
 object Membership  extends WithCommonSqlOperations[Membership] {
+  def updateMember(membership: Membership): Int = update(
+    sql"""
+         update $table set
+            can_manage_members=${membership.canManageMembers},
+            can_manage_tasks=${membership.canManageTasks}
+         where
+            person=${membership.memberId} and
+            project=${membership.projectId}
+       """
+  )
+
 
   def invite(membership: Membership): Int =
     update(
