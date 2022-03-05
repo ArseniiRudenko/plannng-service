@@ -62,16 +62,43 @@ object ProjectApiServiceImpl extends ProjectApiService with LazyLogging{
     )
 
 
-  override def deleteProject(projectNumber: Int)(implicit user: Auth): Result[Unit] = ???
+  override def deleteProject(projectNumber: Int)(implicit auth: Auth): Result[Unit] = {
+    Project.get(projectNumber) match {
+      case Some(value) =>
+        if(value.owner == auth.user.id)
+          Project.delete(projectNumber) match {
+            case 1 => SuccessEmpty
+            case 0 => NotFound
+            case n =>
+              logger.error(s"errror removing project $projectNumber by user ${auth.user}, num records $n")
+              GeneralResult(500,"db request error")
+          }
+        else
+          NotAuthorized
+      case None => NotFound
+    }
+  }
 
-  override def getProject(projectNumber: Int)(implicit user: Auth): Result[Project] = ???
+
+  override def getProject(projectNumber: Int)(implicit user: Auth): Result[Project] =
+    Project.get(projectNumber) match {
+      case Some(value) => SuccessEntity(value)
+      case None => NotFound
+    }
 
   override def getProjectList(implicit auth: Auth): Result[Seq[Project]] =
     SuccessEntity(Project.getProjectList(auth.user.projects.map(_.projectId).toSeq))
 
   override def updateProject(project: Project)(implicit user: Auth): Result[Unit] = ???
 
-  override def createProject(project: ProjectCreationInfo)(implicit user: Auth): Result[Project] = ???
 
-  override def rejectAccess(projectNumber: Int)(implicit user: Auth): Result[Unit] = ???
+  override def createProject(project: ProjectCreationInfo)(implicit auth: Auth): Result[Project] =
+    Project.create(project,auth.user.id) match {
+      case Some(value) => SuccessEntity(value)
+      case None => WrongInput("something went wrong")
+    }
+
+
+  override def rejectInvite(projectNumber: Int)(implicit auth: Auth): Result[Unit] =
+    intToResult.apply(Membership.delete(projectNumber,auth.user.id))
 }

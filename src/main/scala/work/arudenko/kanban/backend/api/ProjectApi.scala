@@ -19,6 +19,8 @@ class ProjectApi (
         pathEndOrSingleSlash{
           concat(
              post {//create project
+
+               //TODO: add endpoint and logic for transferring project ownership
                entity(as[ProjectCreationInfo]) { project=>
                  projectService.createProject(project)
                }
@@ -69,7 +71,7 @@ class ProjectApi (
                   projectService.requestAccess(projectNumber)
                 },
                 delete{ //reject invite or cancel request
-                  projectService.rejectAccess(projectNumber)
+                  projectService.rejectInvite(projectNumber)
                 }
               )
             },
@@ -91,7 +93,7 @@ class ProjectApi (
 trait ProjectApiService{
   def requestAccess(projectNumber: Int)(implicit user:Auth): Result[Unit]
 
-  def rejectAccess(projectNumber: Int)(implicit user:Auth): Result[Unit]
+  def rejectInvite(projectNumber: Int)(implicit user:Auth): Result[Unit]
 
   def deleteMember(membership: Membership)(implicit user:Auth): Result[Unit]
 
