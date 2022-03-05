@@ -12,6 +12,20 @@ final case class ProjectCreationInfo(name:String, description:Option[String])
 final case class Project(id:Int,name:String, description:Option[String],owner:Int)
 
 object Project  extends WithCommonSqlOperations[Project] {
+
+  def delete(projectNumber: Int, userId: Int): Int =
+    update(sql"delete from $table where id=$projectNumber and owner=$userId")
+
+
+  def updateProj(project: Project, userId: Int): Int = update(
+    sql"""
+         update $table set
+        name=${project.name},
+        description=${project.description}
+        where id=${project.id} and owner=$userId
+       """
+  )
+
   def create(project: ProjectCreationInfo,userId:Int): Option[Project] = Try{
       val id=insert(
       sql"""

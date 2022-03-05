@@ -47,6 +47,7 @@ final case class UserUpdateInfo (
 )
 
 final case class UserInfo(
+  id:Option[Int],
   firstName: Option[String],
   lastName: Option[String],
   email: Option[String],
@@ -56,6 +57,7 @@ final case class UserInfo(
 object UserInfo{
   def apply(user:User):UserInfo =
     new UserInfo(
+      Some(user.id),
       user.firstName,
       user.lastName,
       user.email,
@@ -92,6 +94,7 @@ object User extends WithCommonSqlOperations[User] {
     select(u.*).from(User as u)
       .where(
         sqls.toAndConditionOpt(
+          userInfo.id.map(fn => sqls.eq(u.column("id"), fn)),
           userInfo.firstName.map(fn => sqls.eq(u.column("first_name"), fn)),
           userInfo.lastName.map(fn => sqls.eq(u.column("last_name"), fn)),
           userInfo.email.map(fn => sqls.eq(u.column("email"), fn)),

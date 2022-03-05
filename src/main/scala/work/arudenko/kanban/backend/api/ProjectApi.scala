@@ -62,6 +62,12 @@ class ProjectApi (
                },
                delete{
                  projectService.deleteProject(projectNumber)
+               },
+               post{
+                 //transfer project to
+                  entity(as[UserInfo]){userInfo=>
+                    projectService.transferOwnership(projectNumber,userInfo)
+                  }
                }
              )
             },
@@ -91,6 +97,8 @@ class ProjectApi (
 }
 
 trait ProjectApiService{
+  def transferOwnership(projectNumber: Int, userInfo: UserInfo)(implicit auth:Auth): Result[Unit]
+
   def requestAccess(projectNumber: Int)(implicit user:Auth): Result[Unit]
 
   def rejectInvite(projectNumber: Int)(implicit user:Auth): Result[Unit]
@@ -120,6 +128,8 @@ trait ProjectApiMarshaller{
   implicit def fromEntityUnmarshallerInt: FromEntityUnmarshaller[Int]
 
   implicit def fromEntityUnmarshallerProject: FromEntityUnmarshaller[Project]
+
+  implicit def fromEntityUnmarshallerUserInfo: FromEntityUnmarshaller[UserInfo]
 
   implicit def fromEntityUnmarshallerMembership: FromEntityUnmarshaller[Membership]
 
