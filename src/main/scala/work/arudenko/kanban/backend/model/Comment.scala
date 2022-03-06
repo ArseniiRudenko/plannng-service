@@ -32,7 +32,7 @@ object Comment extends WithCommonSqlOperations[Comment] {
     new Comment(
     rs.int("id"),
     rs.string("content"),
-    UserInfo(User.sqlExtractor(rs)),
+    UserInfo.sqlExtractor(rs),
     rs.offsetDateTime("created_at"))
 
   def getByIssueId(issueId:Int): immutable.Seq[Comment] =
