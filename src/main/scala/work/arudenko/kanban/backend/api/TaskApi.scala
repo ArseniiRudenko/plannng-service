@@ -154,13 +154,13 @@ trait TaskApiService {
 }
 
 trait TaskApiMarshaller {
-  implicit def fromEntityUnmarshallerTask: FromEntityUnmarshaller[Task]
+  implicit val fromEntityUnmarshallerTask: FromEntityUnmarshaller[Task]
 
-  implicit def toEntityMarshallerTaskarray: ToEntityMarshaller[Seq[Task]]
+  implicit val toEntityMarshallerTaskarray: ToEntityMarshaller[Seq[Task]]
 
-  implicit def toEntityMarshallerTask: ToEntityMarshaller[Task]
+  implicit val toEntityMarshallerTask: ToEntityMarshaller[Task]
 
-  implicit def toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralResult]
+  implicit val toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralResult]
 
 }
 

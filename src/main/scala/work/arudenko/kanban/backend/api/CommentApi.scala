@@ -91,13 +91,13 @@ trait CommentApiService {
 }
 
 trait CommentApiMarshaller {
-  implicit def fromEntityUnmarshallerComment: FromEntityUnmarshaller[Comment]
+  implicit val fromEntityUnmarshallerComment: FromEntityUnmarshaller[Comment]
 
-  implicit def toEntityMarshallerComment: ToEntityMarshaller[Comment]
+  implicit val toEntityMarshallerComment: ToEntityMarshaller[Comment]
 
-  implicit def toEntityMarshallerCommentarray: ToEntityMarshaller[Seq[Comment]]
+  implicit val toEntityMarshallerCommentarray: ToEntityMarshaller[Seq[Comment]]
 
-  implicit def toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralResult]
+  implicit val toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralResult]
 
 }
 

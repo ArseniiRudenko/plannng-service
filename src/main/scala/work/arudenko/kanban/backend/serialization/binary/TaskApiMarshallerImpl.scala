@@ -9,11 +9,11 @@ object TaskApiMarshallerImpl extends TaskApiMarshaller with BoopickleMarshaller 
 
   import boopickle.Default._
 
-  override implicit def fromEntityUnmarshallerTask: FromEntityUnmarshaller[Task] = getUnmarshaller[Task]
+  override implicit val fromEntityUnmarshallerTask: FromEntityUnmarshaller[Task] = getUnmarshaller[Task]
 
-  override implicit def toEntityMarshallerTaskarray: ToEntityMarshaller[Seq[Task]] = getMarshaller[Seq[Task]]
+  override implicit val toEntityMarshallerTaskarray: ToEntityMarshaller[Seq[Task]] = getMarshaller[Seq[Task]]
 
-  override implicit def toEntityMarshallerTask: ToEntityMarshaller[Task] = getMarshaller[Task]
+  override implicit val toEntityMarshallerTask: ToEntityMarshaller[Task] = getMarshaller[Task]
 
-  override implicit def toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralResult] = getMarshaller[GeneralResult]
+  override implicit val toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralResult] = getMarshaller[GeneralResult]
 }

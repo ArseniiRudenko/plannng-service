@@ -82,10 +82,10 @@ trait AdminUserApiService{
 
 trait AdminUserApiMarshaller{
 
-  implicit def fromEntityUnmarshallerUser: FromEntityUnmarshaller[User]
-  implicit def toEntityMarshallerUser: ToEntityMarshaller[User]
-  implicit def toEntityMarshallerUserSeq: ToEntityMarshaller[Seq[User]]
-  implicit def fromEntityUnmarshallerUserInfo: FromEntityUnmarshaller[UserInfo]
-  implicit def fromEntityUnmarshallerUserList: FromEntityUnmarshaller[Seq[UserInfo]]
+  implicit val fromEntityUnmarshallerUser: FromEntityUnmarshaller[User]
+  implicit val toEntityMarshallerUser: ToEntityMarshaller[User]
+  implicit val toEntityMarshallerUserSeq: ToEntityMarshaller[Seq[User]]
+  implicit val fromEntityUnmarshallerUserInfo: FromEntityUnmarshaller[UserInfo]
+  implicit val fromEntityUnmarshallerUserList: FromEntityUnmarshaller[Seq[UserInfo]]
 
 }

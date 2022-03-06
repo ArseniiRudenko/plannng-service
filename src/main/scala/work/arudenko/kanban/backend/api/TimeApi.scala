@@ -87,13 +87,13 @@ trait TimeApiService {
 }
 
 trait TimeApiMarshaller {
-  implicit def fromEntityUnmarshallerTime: FromEntityUnmarshaller[Time]
+  implicit val fromEntityUnmarshallerTime: FromEntityUnmarshaller[Time]
 
-  implicit def toEntityMarshallerTime: ToEntityMarshaller[Time]
+  implicit val toEntityMarshallerTime: ToEntityMarshaller[Time]
 
-  implicit def toEntityMarshallerTimearray: ToEntityMarshaller[Seq[Time]]
+  implicit val toEntityMarshallerTimearray: ToEntityMarshaller[Seq[Time]]
 
-  implicit def toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralResult]
+  implicit val toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralResult]
 
 }
 

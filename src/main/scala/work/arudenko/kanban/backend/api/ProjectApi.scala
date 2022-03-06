@@ -19,8 +19,6 @@ class ProjectApi (
         pathEndOrSingleSlash{
           concat(
              post {//create project
-
-               //TODO: add endpoint and logic for transferring project ownership
                entity(as[ProjectCreationInfo]) { project=>
                  projectService.createProject(project)
                }
@@ -36,22 +34,25 @@ class ProjectApi (
            )
         },
         path("member"){
-          entity(as[Membership]) { membership =>
             concat(
               post {
                   //add memeber
-                //TODO: allow inviting users by email
-                  projectService.inviteMember(membership)
+                entity(as[MembershipInfo]) { membershipInfo =>
+                  projectService.inviteMember(membershipInfo)
+                }
               },
               put {
+                entity(as[Membership]) { membership =>
                   //change member permissions
                   projectService.updateMember(membership)
+                }
               },
               delete {
+                entity(as[Membership]) { membership =>
                   projectService.deleteMember(membership)
+                }
               }
             )
-          }
         },
         pathPrefix(IntNumber){ projectNumber=>
           concat(
@@ -107,7 +108,7 @@ trait ProjectApiService{
 
   def updateMember(membership: Membership)(implicit user:Auth): Result[Unit]
 
-  def inviteMember(membership: Membership)(implicit user:Auth): Result[Unit]
+  def inviteMember(membership: MembershipInfo)(implicit user:Auth): Result[Unit]
 
   def getMembers(projectNumber: Int)(implicit user:Auth): Result[Seq[MembershipInfo]]
 
@@ -125,19 +126,21 @@ trait ProjectApiService{
 }
 
 trait ProjectApiMarshaller{
-  implicit def fromEntityUnmarshallerInt: FromEntityUnmarshaller[Int]
+  implicit val fromEntityUnmarshallerInt: FromEntityUnmarshaller[Int]
 
-  implicit def fromEntityUnmarshallerProject: FromEntityUnmarshaller[Project]
+  implicit val fromEntityUnmarshallerProject: FromEntityUnmarshaller[Project]
 
-  implicit def fromEntityUnmarshallerUserInfo: FromEntityUnmarshaller[UserInfo]
+  implicit val fromEntityUnmarshallerUserInfo: FromEntityUnmarshaller[UserInfo]
 
-  implicit def fromEntityUnmarshallerMembership: FromEntityUnmarshaller[Membership]
+  implicit val fromEntityUnmarshallerMembership: FromEntityUnmarshaller[Membership]
 
-  implicit def fromEntityUnmarshallerProjectCreationInfo: FromEntityUnmarshaller[ProjectCreationInfo]
+  implicit val fromEntityUnmarshallerMembershipInfo: FromEntityUnmarshaller[MembershipInfo]
 
-  implicit def toEntityMarshallerProject: ToEntityMarshaller[Project]
+  implicit val fromEntityUnmarshallerProjectCreationInfo: FromEntityUnmarshaller[ProjectCreationInfo]
 
-  implicit def toEntityMarshallerMembershipInfo: ToEntityMarshaller[MembershipInfo]
+  implicit val toEntityMarshallerProject: ToEntityMarshaller[Project]
+
+  implicit val toEntityMarshallerMembershipInfo: ToEntityMarshaller[MembershipInfo]
 
   implicit def toEntityMarshallerMembershipInfoSeq: ToEntityMarshaller[Seq[MembershipInfo]]
 

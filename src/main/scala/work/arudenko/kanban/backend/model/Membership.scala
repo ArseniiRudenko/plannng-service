@@ -5,7 +5,7 @@ import work.arudenko.kanban.backend.orm.WithCommonSqlOperations
 
 final case class Membership(projectId:Int,memberId:Int,canManageMembers:Boolean,canManageTasks:Boolean)
 
-final case class MembershipInfo(projectId:Int,member:User,canManageMembers:Boolean,canManageTasks:Boolean)
+final case class MembershipInfo(projectId:Int,member:UserInfo,canManageMembers:Boolean,canManageTasks:Boolean)
 
 object Membership  extends WithCommonSqlOperations[Membership] {
   def updateMember(membership: Membership): Int = update(
@@ -58,7 +58,7 @@ object Membership  extends WithCommonSqlOperations[Membership] {
 
   def infoSqlExtractor(rs: WrappedResultSet): MembershipInfo = new MembershipInfo(
     rs.int("project"),
-    User.sqlExtractor(rs),
+    UserInfo.sqlExtractor(rs),
     rs.boolean("can_manage_members"),
     rs.boolean("can_manage_tasks")
   )

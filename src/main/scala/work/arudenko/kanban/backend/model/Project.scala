@@ -11,7 +11,12 @@ final case class ProjectCreationInfo(name:String, description:Option[String])
 
 final case class Project(id:Int,name:String, description:Option[String],owner:Int)
 
+
 object Project  extends WithCommonSqlOperations[Project] {
+  def transfer(projectNum: Int, transferFrom: Int, transferTo: Int): Int =
+    update(sql"update $table set owner=$transferTo where id=$projectNum and owner=$transferFrom")
+
+
 
   def delete(projectNumber: Int, userId: Int): Int =
     update(sql"delete from $table where id=$projectNumber and owner=$userId")

@@ -63,12 +63,21 @@ object UserInfo{
       user.email,
       user.phone
     )
+
+  def sqlExtractor(rs:WrappedResultSet):UserInfo =
+    new UserInfo(
+      Some(rs.int("id")),
+      rs.stringOpt("first_name"),
+      rs.stringOpt("last_name"),
+      rs.stringOpt("email"),
+      rs.stringOpt("phone")
+    )
+
 }
 
 object User extends WithCommonSqlOperations[User] {
 
   override val tableName = "project_track.peoples"
-
 
   override def sqlExtractor(rs: WrappedResultSet): User =
     new User(
@@ -89,18 +98,22 @@ object User extends WithCommonSqlOperations[User] {
   def getUser(email: String): Option[User] = getOne(sql" select * from $table where email=$email")
 
   private val u = User.syntax("u")
-  def searchUser(userInfo: UserInfo): Seq[User] = getList(
+  def searchUser(userInfo: UserInfo,limit:Option[Int]=None): Seq[User] = getList(
     withSQL {
-    select(u.*).from(User as u)
-      .where(
-        sqls.toAndConditionOpt(
-          userInfo.id.map(fn => sqls.eq(u.column("id"), fn)),
-          userInfo.firstName.map(fn => sqls.eq(u.column("first_name"), fn)),
-          userInfo.lastName.map(fn => sqls.eq(u.column("last_name"), fn)),
-          userInfo.email.map(fn => sqls.eq(u.column("email"), fn)),
-          userInfo.phone.map(fn => sqls.eq(u.column("phone"), fn))
+      val sel: scalikejdbc.ConditionSQLBuilder[User] = select(u.*).from(User as u)
+        .where(
+          sqls.toAndConditionOpt(
+            userInfo.id.map(fn => sqls.eq(u.column("id"), fn)),
+            userInfo.firstName.map(fn => sqls.eq(u.column("first_name"), fn)),
+            userInfo.lastName.map(fn => sqls.eq(u.column("last_name"), fn)),
+            userInfo.email.map(fn => sqls.eq(u.column("email"), fn)),
+            userInfo.phone.map(fn => sqls.eq(u.column("phone"), fn))
+          )
         )
-      )
+      limit match {
+        case Some(value) => sel.limit(value)
+        case None => sel
+      }
     }
   )
 

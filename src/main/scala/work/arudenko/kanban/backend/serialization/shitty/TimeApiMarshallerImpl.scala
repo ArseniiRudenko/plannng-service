@@ -7,11 +7,11 @@ import work.arudenko.kanban.backend.model.{GeneralResult, Time}
 
 object TimeApiMarshallerImpl extends TimeApiMarshaller with JacksonMarshaller {
 
-  override implicit def fromEntityUnmarshallerTime: FromEntityUnmarshaller[Time] = getUnmarshaller[Time]
+  override implicit val fromEntityUnmarshallerTime: FromEntityUnmarshaller[Time] = getUnmarshaller[Time]
 
-  override implicit def toEntityMarshallerTime: ToEntityMarshaller[Time] = getMarshaller[Time]
+  override implicit val toEntityMarshallerTime: ToEntityMarshaller[Time] = getMarshaller[Time]
 
-  override implicit def toEntityMarshallerTimearray: ToEntityMarshaller[Seq[Time]] = getMarshaller[Seq[Time]]
+  override implicit val toEntityMarshallerTimearray: ToEntityMarshaller[Seq[Time]] = getMarshaller[Seq[Time]]
 
-  override implicit def toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralResult] = getMarshaller[GeneralResult]
+  override implicit val toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralResult] = getMarshaller[GeneralResult]
 }

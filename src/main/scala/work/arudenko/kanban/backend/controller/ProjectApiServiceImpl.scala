@@ -38,11 +38,24 @@ object ProjectApiServiceImpl extends ProjectApiService with LazyLogging{
     )
   }
 
-  override def inviteMember(membership: Membership)(implicit auth: Auth): Result[Unit] = {
+  override def inviteMember(membershipInfo: MembershipInfo)(implicit auth: Auth): Result[Unit] = {
     processMemershipRequest(
-      membership.projectId,
-      ()=>Membership.invite(membership),
-      intToResult
+      membershipInfo.projectId,
+      ()=> membershipInfo.member.id match {
+        case Some(value) =>
+          val membership = Membership(membershipInfo.projectId,value,membershipInfo.canManageMembers,membershipInfo.canManageTasks)
+          intToResult.apply(Membership.invite(membership))
+        case None =>
+          val users = User.searchUser(membershipInfo.member,Some(2))
+          users.length match {
+            case 1=>
+              val membership = Membership(membershipInfo.projectId,users.head.id,membershipInfo.canManageMembers,membershipInfo.canManageTasks)
+              intToResult.apply(Membership.invite(membership))
+            case 0=> WrongInput("no users match the criteria")
+            case _=> WrongInput("more than one user matches the criteria, please refine the info")
+          }
+      },
+      identity[Result[Unit]]
     )
   }
 
@@ -96,5 +109,17 @@ object ProjectApiServiceImpl extends ProjectApiService with LazyLogging{
   override def rejectInvite(projectNumber: Int)(implicit auth: Auth): Result[Unit] =
     intToResult.apply(Membership.delete(projectNumber,auth.user.id))
 
-  override def transferOwnership(projectNumber: Int, userInfo: UserInfo)(implicit auth: Auth): Result[Unit] = ???
+  override def transferOwnership(projectNumber: Int, userInfo: UserInfo)(implicit auth: Auth): Result[Unit] = {
+    userInfo.id match {
+      case Some(value) => intToResult.apply(Project.transfer(projectNumber:Int,auth.user.id,value))
+      case None =>
+        val users = User.searchUser(userInfo,Some(2))
+        users.length match {
+          case 1=> intToResult.apply(Project.transfer(projectNumber,auth.user.id,users.head.id))
+          case 0=> WrongInput("no users match the criteria")
+          case _=> WrongInput("more than one user matches the criteria, please refine the info")
+        }
+
+    }
+  }
 }

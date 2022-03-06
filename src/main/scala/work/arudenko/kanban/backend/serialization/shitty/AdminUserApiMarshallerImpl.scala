@@ -8,11 +8,11 @@ import work.arudenko.kanban.backend.serialization.shitty.UserApiMarshallerImpl.{
 
 object  AdminUserApiMarshallerImpl extends  AdminUserApiMarshaller with JacksonMarshaller {
 
-  override implicit def toEntityMarshallerUser: ToEntityMarshaller[User] = getMarshaller[User]
-  override implicit def fromEntityUnmarshallerUser: FromEntityUnmarshaller[User] = getUnmarshaller[User]
+  override implicit val toEntityMarshallerUser: ToEntityMarshaller[User] = getMarshaller[User]
+  override implicit val fromEntityUnmarshallerUser: FromEntityUnmarshaller[User] = getUnmarshaller[User]
 
-  override implicit def toEntityMarshallerUserSeq: ToEntityMarshaller[Seq[User]] = getMarshaller[Seq[User]]
+  override implicit val toEntityMarshallerUserSeq: ToEntityMarshaller[Seq[User]] = getMarshaller[Seq[User]]
 
-  override implicit def fromEntityUnmarshallerUserList: FromEntityUnmarshaller[Seq[UserInfo]] = getUnmarshaller[Seq[UserInfo]]
-  override implicit def fromEntityUnmarshallerUserInfo: FromEntityUnmarshaller[UserInfo] = getUnmarshaller[UserInfo]
+  override implicit val fromEntityUnmarshallerUserList: FromEntityUnmarshaller[Seq[UserInfo]] = getUnmarshaller[Seq[UserInfo]]
+  override implicit val fromEntityUnmarshallerUserInfo: FromEntityUnmarshaller[UserInfo] = getUnmarshaller[UserInfo]
 }

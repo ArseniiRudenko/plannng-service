@@ -140,10 +140,10 @@ trait UserApiService {
 }
 
 trait UserApiMarshaller{
-  implicit def fromEntityUnmarshallerUserCreate: FromEntityUnmarshaller[SignUpInfo]
-  implicit def fromEntityUnmarshallerUserUpdate: FromEntityUnmarshaller[UserUpdateInfo]
-  implicit def toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralResult]
-  implicit def toEntityMarshallerUserInfo: ToEntityMarshaller[UserInfo]
+  implicit val fromEntityUnmarshallerUserCreate: FromEntityUnmarshaller[SignUpInfo]
+  implicit val fromEntityUnmarshallerUserUpdate: FromEntityUnmarshaller[UserUpdateInfo]
+  implicit val toEntityMarshallerGeneralError: ToEntityMarshaller[GeneralResult]
+  implicit val toEntityMarshallerUserInfo: ToEntityMarshaller[UserInfo]
 
 }
 
