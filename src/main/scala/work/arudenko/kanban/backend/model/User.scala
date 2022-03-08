@@ -47,11 +47,11 @@ final case class UserUpdateInfo (
 )
 
 final case class UserInfo(
-  id:Option[Int],
-  firstName: Option[String],
-  lastName: Option[String],
-  email: Option[String],
-  phone: Option[String]
+  id:Option[Int] = None,
+  firstName: Option[String]= None,
+  lastName: Option[String]= None,
+  email: Option[String]= None,
+  phone: Option[String]= None
 )
 
 object UserInfo{
@@ -87,7 +87,7 @@ object User extends WithCommonSqlOperations[User] {
       rs.stringOpt("email"),
       rs.stringOpt("password"),
       rs.stringOpt("phone"),
-      Membership.getProjectListForUser(rs.int("id")),
+      Set.empty,
       rs.boolean("is_enabled"),
       rs.boolean("is_email_verified"),
       rs.boolean("is_admin")
@@ -98,24 +98,38 @@ object User extends WithCommonSqlOperations[User] {
   def getUser(email: String): Option[User] = getOne(sql" select * from $table where email=$email")
 
   private val u = User.syntax("u")
-  def searchUser(userInfo: UserInfo,limit:Option[Int]=None): Seq[User] = getList(
-    withSQL {
-      val sel: scalikejdbc.ConditionSQLBuilder[User] = select(u.*).from(User as u)
-        .where(
-          sqls.toAndConditionOpt(
-            userInfo.id.map(fn => sqls.eq(u.column("id"), fn)),
-            userInfo.firstName.map(fn => sqls.eq(u.column("first_name"), fn)),
-            userInfo.lastName.map(fn => sqls.eq(u.column("last_name"), fn)),
-            userInfo.email.map(fn => sqls.eq(u.column("email"), fn)),
-            userInfo.phone.map(fn => sqls.eq(u.column("phone"), fn))
+  private val m = Membership.syntax("m")
+
+  def searchUser(userInfo: UserInfo,limit:Option[Int]=None): Seq[User] =
+    DB readOnly { implicit session =>
+      withSQL {
+        val sel: scalikejdbc.ConditionSQLBuilder[User] = select(u.*,m.*).from(User as u)
+          .leftJoin(Membership as m)
+          .on(u.column("id"), m.column("person"))
+          .where(
+            sqls.toAndConditionOpt(
+              userInfo.id.map(fn => sqls.eq(u.column("id"), fn)),
+              userInfo.firstName.map(fn => sqls.eq(u.column("first_name"), fn)),
+              userInfo.lastName.map(fn => sqls.eq(u.column("last_name"), fn)),
+              userInfo.email.map(fn => sqls.eq(u.column("email"), fn)),
+              userInfo.phone.map(fn => sqls.eq(u.column("phone"), fn))
+            )
           )
-        )
-      limit match {
-        case Some(value) => sel.limit(value)
-        case None => sel
-      }
+        limit match {
+          case Some(value) => sel.limit(value)
+          case None => sel
+        }
+      }.one(User.sqlExtractor)
+        .toMany(Membership.sqlExtractorOpt)
+        .map((usr, membership) => usr.copy(projects = membership.toSet))
+        .list
+        .apply()
     }
-  )
+
+
+  override def get(id: Int): Option[User] =
+    searchUser(new UserInfo(id=Some(id))).headOption
+
 
   def getId(email: String): Option[Int] =
     DB readOnly { implicit session =>

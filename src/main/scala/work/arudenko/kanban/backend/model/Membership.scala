@@ -55,6 +55,18 @@ object Membership  extends WithCommonSqlOperations[Membership] {
     rs.boolean("can_manage_tasks")
   )
 
+  def sqlExtractorOpt(rs: WrappedResultSet): Option[Membership] =
+    Option(rs.get[Integer]("project")) match {
+      case Some(value) =>  Some(
+        new Membership(
+        value,
+        rs.int("person"),
+        rs.boolean("can_manage_members"),
+        rs.boolean("can_manage_tasks")
+      ))
+      case None => None
+    }
+
 
   def infoSqlExtractor(rs: WrappedResultSet): MembershipInfo = new MembershipInfo(
     rs.int("project"),
