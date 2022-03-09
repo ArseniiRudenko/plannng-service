@@ -15,19 +15,6 @@ import work.arudenko.kanban.backend.serialization.binary.UserApiMarshallerImpl.{
 trait GenericApi {
 
 
-  val authenticator:Authenticator[Auth] = {
-    case Credentials.Missing => None
-    case p:Credentials.Provided =>
-      redis.withClient {
-        client => client.get[User](p.identifier)(userSerializer,userParser).map(u=>{
-          client.expire(p.identifier,Auth.authDuration.toSeconds.toInt)
-          Auth(p.identifier,u)
-        })
-      }
-  }
-
-  val adminAuthenticator:Authenticator[Auth] =
-    authenticator.andThen(_.flatMap(auth=>if(auth.user.admin) Some(auth) else None))
 
   implicit val unitMarshaller:ToEntityMarshaller[Unit] = Marshaller.opaque((_:Unit) => HttpEntity.Empty)
 

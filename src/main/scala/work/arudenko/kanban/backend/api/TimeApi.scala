@@ -10,17 +10,18 @@ import work.arudenko.kanban.backend.model.{GeneralResult, Result, Time}
 import work.arudenko.kanban.backend.AkkaHttpHelper._
 import work.arudenko.kanban.backend.controller.Auth
 
+import scala.concurrent.ExecutionContext
+
 
 class TimeApi(
     timeService: TimeApiService,
-    timeMarshaller: TimeApiMarshaller
-) extends AuthenticatedApi {
+    timeMarshaller: TimeApiMarshaller)
+             (implicit ex:ExecutionContext) extends AuthenticatedApi("time") {
 
   
   import timeMarshaller._
 
   override def route(implicit auth: Auth): Route =
-    pathPrefix("time") {
       concat(
         path("task" / IntNumber) { (taskId) =>
             concat(
@@ -50,7 +51,6 @@ class TimeApi(
           )
         }
       )
-    }
 }
 
 

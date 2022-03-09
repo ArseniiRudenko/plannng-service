@@ -1,4 +1,4 @@
-package work.arudenko.kanban.backend.serialization.shitty
+package work.arudenko.kanban.backend.serialization.jackson
 
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
 import akka.http.scaladsl.unmarshalling.FromEntityUnmarshaller

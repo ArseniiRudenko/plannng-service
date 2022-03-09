@@ -7,11 +7,13 @@ import akka.http.scaladsl.unmarshalling.FromEntityUnmarshaller
 import work.arudenko.kanban.backend.controller.Auth
 import work.arudenko.kanban.backend.model._
 
+import scala.concurrent.ExecutionContext
+
 
 class UserApi(
     userService: UserApiService,
     userMarshaller: UserApiMarshaller
-) extends AuthenticatedApi {
+) (implicit ex:ExecutionContext)extends AuthenticatedApi("user") {
 
   import userMarshaller._
 
@@ -54,7 +56,7 @@ class UserApi(
 
 
   override def route(implicit auth: Auth): Route =
-    pathPrefix("user") {
+
       concat(
         pathEndOrSingleSlash {
             concat(
@@ -89,7 +91,6 @@ class UserApi(
           }
         }
       )
-    }
 
 }
 

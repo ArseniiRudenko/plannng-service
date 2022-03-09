@@ -6,7 +6,7 @@ import boopickle.{DecoderSpeed, Default, EncoderSpeed}
 import com.redis.serialization.{Format, Parse}
 import work.arudenko.kanban.backend.api.UserApiMarshaller
 import work.arudenko.kanban.backend.model._
-import work.arudenko.kanban.backend.serialization.shitty.UserApiMarshallerImpl.{getMarshaller, getUnmarshaller}
+import work.arudenko.kanban.backend.serialization.jackson.UserApiMarshallerImpl.{getMarshaller, getUnmarshaller}
 
 import java.nio.ByteBuffer
 

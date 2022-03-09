@@ -3,20 +3,34 @@ package work.arudenko.kanban.backend.api
 import akka.http.scaladsl.server._
 import Directives._
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
+import akka.http.scaladsl.model.Uri.Path
+import akka.http.scaladsl.server
+import akka.http.scaladsl.server.util.Tuple
 import akka.http.scaladsl.unmarshalling.FromEntityUnmarshaller
 import work.arudenko.kanban.backend.controller.Auth
 import work.arudenko.kanban.backend.model.{Result, User, UserInfo}
 
+import scala.concurrent.ExecutionContext
+
 class AdminUserApi(
                     adminUserService: AdminUserApiService,
                     userMarshaller: AdminUserApiMarshaller
-                  )  extends AuthenticatedApi {
+                  )(implicit ex:ExecutionContext)  extends AuthenticatedApi("admin") {
 
   import userMarshaller._
 
+  private val authenticatorAdmin: server.Directives.Authenticator[Auth] =
+    authenticator.andThen(_.flatMap(auth=>if(auth.user.admin) Some(auth) else None))
+
+  override val authenticatedRoute:Route = pathPrefix("admin"){
+    authenticateOAuth2("Global", authenticatorAdmin) {
+      implicit auth => route
+    }
+  }
+
 
   override def route(implicit auth: Auth): Route =
-    pathPrefix( "admin" / "user") {
+    pathPrefix(  "user") {
       concat(
         pathEndOrSingleSlash {
           concat(
@@ -51,6 +65,7 @@ class AdminUserApi(
         }
       )
     }
+
 
 }
 

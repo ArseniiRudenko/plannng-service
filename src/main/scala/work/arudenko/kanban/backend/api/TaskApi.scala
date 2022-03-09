@@ -16,17 +16,19 @@ import work.arudenko.kanban.backend.controller.Auth
 import work.arudenko.kanban.backend.{FileField, MultipartDirectives, StringDirectives}
 import work.arudenko.kanban.backend.model.{GeneralResult, Result, Task, Time}
 
+import scala.concurrent.ExecutionContext
+
 
 class TaskApi(
     taskService: TaskApiService,
     taskMarshaller: TaskApiMarshaller
-)  extends MultipartDirectives with StringDirectives with AuthenticatedApi {
+)(implicit ex:ExecutionContext)  extends AuthenticatedApi("task") with MultipartDirectives with StringDirectives {
 
   
   import taskMarshaller._
 
   override def route(implicit auth: Auth): Route =
-    pathPrefix("task") {
+
         concat(
           pathEndOrSingleSlash{
             concat(
@@ -89,7 +91,6 @@ class TaskApi(
             }
           }
         )
-    }
 
 
 }

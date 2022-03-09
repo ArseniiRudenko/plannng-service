@@ -10,17 +10,19 @@ import work.arudenko.kanban.backend.model.{Comment, GeneralResult, Result}
 import work.arudenko.kanban.backend.AkkaHttpHelper._
 import work.arudenko.kanban.backend.controller.Auth
 
+import scala.concurrent.ExecutionContext
+
 
 class CommentApi(
     commentService: CommentApiService,
     commentMarshaller: CommentApiMarshaller
-)extends AuthenticatedApi  {
+)(implicit ex:ExecutionContext)extends AuthenticatedApi("comment")  {
 
   
   import commentMarshaller._
 
+
   override def route(implicit auth: Auth): Route =
-    pathPrefix("comment") {
       concat(
         path("task" / IntNumber) { taskId =>
           concat(
@@ -52,7 +54,7 @@ class CommentApi(
             }
         }
       )
-    }
+
 }
 
 
